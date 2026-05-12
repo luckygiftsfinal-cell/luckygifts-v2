@@ -36,12 +36,38 @@ export interface Product {
 
 export interface Order {
   id: string;
-  user: string;
-  date: string;
-  total: string;
+  user_id?: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  total_amount: number;
+  discount_amount?: number;
+  payment_method: string;
   status: string;
-  items: number;
-  payment: string;
+  items: any;
+  tickets_earned: number;
+  referrer_id?: string;
+  payment_details?: any;
+  created_at: string;
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  discount_percent: number;
+  is_active: boolean;
+  max_uses: number;
+  current_uses: number;
+}
+
+export interface UserTicket {
+  id: string;
+  user_id: string;
+  order_id: string;
+  ticket_code: string;
+  status: string;
+  created_at: string;
 }
 
 export interface VIPPackage {
@@ -60,6 +86,8 @@ interface StoreContextType {
   draws: PrizeDraw[];
   products: Product[];
   orders: Order[];
+  tickets: UserTicket[];
+  promoCodes: PromoCode[];
   vipPackages: VIPPackage[];
   loading: boolean;
   addCategory: (cat: Partial<Category>) => Promise<void>;
@@ -68,7 +96,12 @@ interface StoreContextType {
   addProduct: (product: Partial<Product>) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  addOrder: (order: Partial<Order>) => Promise<void>;
+  addOrder: (order: Partial<Order>) => Promise<string>;
+  updateOrder: (order: Order) => Promise<void>;
+  validatePromoCode: (code: string) => Promise<PromoCode | null>;
+  addPromoCode: (promo: Partial<PromoCode>) => Promise<void>;
+  deletePromoCode: (id: string) => Promise<void>;
+  issueTickets: (orderId: string, userId: string, count: number) => Promise<string[]>;
   updateVIPPackage: (pkg: VIPPackage) => void;
   refreshData: () => Promise<void>;
 }
@@ -86,8 +119,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [draws, setDraws] = useState<PrizeDraw[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [tickets, setTickets] = useState<UserTicket[]>([]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [vipPackages, setVipPackages] = useState<VIPPackage[]>(initialVIPPackages);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    handleReferral();
+    fetchData();
+  }, []);
+
+  const handleReferral = () => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      localStorage.setItem('luckygifts_ref', ref);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -111,16 +159,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }));
         setProducts(mappedProducts);
       }
+
+      // Fetch Orders
+      const { data: orderData } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+      if (orderData) setOrders(orderData);
+
+      // Fetch User Tickets (for admin/general overview)
+      const { data: ticketData } = await supabase.from('user_tickets').select('*').order('created_at', { ascending: false });
+      if (ticketData) setTickets(ticketData);
+
+      // Fetch Promo Codes
+      const { data: promoData } = await supabase.from('promo_codes').select('*');
+      if (promoData) setPromoCodes(promoData);
     } catch (error) {
       console.error("Error fetching data from Supabase:", error);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const addCategory = async (cat: Partial<Category>) => {
     const { error } = await supabase.from('categories').insert([cat]);
@@ -177,21 +233,76 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const addOrder = async (order: Partial<Order>) => {
-    // For now, orders still local or you can create a table for them
-    const newOrder = { ...order, id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`, date: new Date().toISOString().split('T')[0] } as Order;
-    setOrders(prev => [newOrder, ...prev]);
+    const { data, error } = await supabase.from('orders').insert([order]).select();
+    if (!error && data) {
+      await fetchData();
+      return data[0].id;
+    } else {
+      console.error("Error saving order:", error);
+      throw error;
+    }
   };
 
-  const updateVIPPackage = (pkg: VIPPackage) => {
-    setVipPackages(prev => prev.map(p => p.id === pkg.id ? pkg : p));
+  const updateOrder = async (order: Order) => {
+    const { error } = await supabase.from('orders').update(order).eq('id', order.id);
+    if (!error) await fetchData();
+  };
+
+  const issueTickets = async (orderId: string, userId: string, count: number) => {
+    const newTickets = [];
+    const ticketCodes = [];
+    for (let i = 0; i < count; i++) {
+      const randomCode = `LG-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      ticketCodes.push(randomCode);
+      newTickets.push({
+        user_id: userId,
+        order_id: orderId,
+        ticket_code: randomCode,
+        status: 'active'
+      });
+    }
+
+    const { error } = await supabase.from('user_tickets').insert(newTickets);
+    if (!error) {
+      await fetchData();
+      return ticketCodes;
+    } else {
+      console.error("Error issuing tickets:", error);
+      return [];
+    }
+  };
+
+  const validatePromoCode = async (code: string) => {
+    const { data, error } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .eq('is_active', true)
+      .single();
+    
+    if (error || !data) return null;
+    if (data.current_uses >= data.max_uses) return null;
+    
+    return data as PromoCode;
+  };
+
+  const addPromoCode = async (promo: Partial<PromoCode>) => {
+    const { error } = await supabase.from('promo_codes').insert([promo]);
+    if (!error) fetchData();
+  };
+
+  const deletePromoCode = async (id: string) => {
+    const { error } = await supabase.from('promo_codes').delete().eq('id', id);
+    if (!error) fetchData();
   };
 
   return (
     <StoreContext.Provider value={{ 
-      categories, draws, products, orders, vipPackages, loading,
+      categories, draws, products, orders, tickets, promoCodes, vipPackages, loading,
       addCategory, updateCategory, deleteCategory,
       addProduct, updateProduct, deleteProduct,
-      addOrder, updateVIPPackage,
+      addOrder, updateOrder, issueTickets, updateVIPPackage,
+      validatePromoCode, addPromoCode, deletePromoCode,
       refreshData: fetchData
     }}>
       {children}

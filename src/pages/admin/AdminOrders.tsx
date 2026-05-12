@@ -3,13 +3,7 @@ import { Search, Filter, Download, Eye, CheckCircle, Clock, XCircle, Truck } fro
 import { toast } from "sonner";
 import { useStore } from "../../context/StoreContext";
 
-const mockOrders = [
-  { id: "ORD-7742", user: "Ahmed Al-Maktoum", date: "2026-05-10", total: "$150.00", status: "Delivered", items: 3, payment: "Credit Card" },
-  { id: "ORD-7743", user: "Sarah Johnson", date: "2026-05-11", total: "$25.00", status: "Pending", items: 1, payment: "PayPal" },
-  { id: "ORD-7744", user: "Khalid Mansour", date: "2026-05-11", total: "$500.00", status: "Processing", items: 5, payment: "Bank Transfer" },
-  { id: "ORD-7745", user: "Elena Rodriguez", date: "2026-05-12", total: "$100.00", status: "Shipped", items: 2, payment: "Credit Card" },
-  { id: "ORD-7746", user: "James Wilson", date: "2026-05-12", total: "$45.00", status: "Cancelled", items: 1, payment: "Credit Card" },
-];
+// Removed mockOrders in favor of Supabase data from StoreContext
 
 export default function AdminOrders() {
   const { orders, updateOrder } = useStore();
@@ -17,7 +11,8 @@ export default function AdminOrders() {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case "Delivered": return "bg-[#00C853]/10 text-[#00C853] border-[#00C853]/20";
+      case "Delivered":
+      case "paid": return "bg-[#00C853]/10 text-[#00C853] border-[#00C853]/20";
       case "Pending": return "bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20";
       case "Processing": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       case "Shipped": return "bg-purple-500/10 text-purple-500 border-purple-500/20";
@@ -36,7 +31,7 @@ export default function AdminOrders() {
 
   const exportToCSV = () => {
     const headers = ["Order ID", "Customer", "Date", "Total", "Status", "Payment"];
-    const rows = orders.map(o => [o.id, o.user, o.date, o.total, o.status, o.payment]);
+    const rows = orders.map(o => [o.id, o.full_name, new Date(o.created_at).toLocaleDateString(), o.total_amount, o.status, o.payment_method]);
     
     let csvContent = "data:text/csv;charset=utf-8," 
       + headers.join(",") + "\n"
@@ -109,23 +104,23 @@ export default function AdminOrders() {
             <tbody className="divide-y divide-white/5">
               {orders.map((order) => (
                 <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="py-4 px-6 font-mono text-sm text-[#FFD700] font-bold">{order.id}</td>
+                  <td className="py-4 px-6 font-mono text-[10px] text-[#FFD700] font-bold">{order.id}</td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFD700]/20 to-transparent flex items-center justify-center text-xs font-bold text-[#FFD700]">
-                        {order.user.charAt(0)}
+                        {order.full_name?.charAt(0) || "U"}
                       </div>
-                      <span className="text-white font-medium">{order.user}</span>
+                      <span className="text-white font-medium">{order.full_name}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-6 text-white/60 text-sm">{order.date}</td>
-                  <td className="py-4 px-6 text-white font-black">{order.total}</td>
+                  <td className="py-4 px-6 text-white/60 text-sm">{new Date(order.created_at).toLocaleDateString()}</td>
+                  <td className="py-4 px-6 text-white font-black">${order.total_amount?.toLocaleString()}</td>
                   <td className="py-4 px-6">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyle(order.status)}`}>
                       {order.status}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-white/40 text-[10px] font-bold uppercase tracking-widest">{order.payment}</td>
+                  <td className="py-4 px-6 text-white/40 text-[10px] font-bold uppercase tracking-widest">{order.payment_method}</td>
                   <td className="py-4 px-6 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
@@ -157,8 +152,9 @@ export default function AdminOrders() {
           <div className="relative bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-start mb-8">
               <div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Order {selectedOrder.id}</h3>
-                <p className="text-white/40 text-sm">{selectedOrder.date}</p>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Order Details</h3>
+                <p className="text-white/40 text-xs font-mono">{selectedOrder.id}</p>
+                <p className="text-white/40 text-sm">{new Date(selectedOrder.created_at).toLocaleString()}</p>
                 <div className="mt-2">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyle(selectedOrder.status)}`}>
                     {selectedOrder.status}
@@ -177,17 +173,15 @@ export default function AdminOrders() {
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Customer Details</h4>
                 <div className="text-sm">
-                  <p className="text-white font-bold">{selectedOrder.user}</p>
-                  <p className="text-white/40">customer@example.com</p>
-                  <p className="text-white/40">+971 50 123 4567</p>
+                  <p className="text-white font-bold">{selectedOrder.full_name}</p>
+                  <p className="text-white/40">{selectedOrder.email}</p>
+                  <p className="text-white/40">{selectedOrder.phone}</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Shipping Address</h4>
                 <div className="text-sm text-white/40">
-                  <p>Downtown Dubai, Burj Khalifa St.</p>
-                  <p>Building 4, Apartment 1204</p>
-                  <p>Dubai, UAE</p>
+                  <p>{selectedOrder.address}</p>
                 </div>
               </div>
             </div>
@@ -195,16 +189,18 @@ export default function AdminOrders() {
             <div className="space-y-4 mb-8">
               <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Order Items</h4>
               <div className="space-y-3">
-                {[1, 2].map((i) => (
+                {selectedOrder.items?.map((item: any, i: number) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white/5 rounded-lg" />
+                      <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden border border-white/10">
+                        <img src={item.mainImage} alt={item.title} className="w-full h-full object-cover" />
+                      </div>
                       <div>
-                        <p className="text-sm text-white font-bold italic">Signature Item #{i}</p>
-                        <p className="text-[10px] text-white/30 uppercase tracking-widest">Qty: 1</p>
+                        <p className="text-sm text-white font-bold italic">{item.title}</p>
+                        <p className="text-[10px] text-white/30 uppercase tracking-widest">Qty: {item.quantity}</p>
                       </div>
                     </div>
-                    <p className="text-sm text-white font-black">$50.00</p>
+                    <p className="text-sm text-white font-black">${(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -213,15 +209,15 @@ export default function AdminOrders() {
             <div className="bg-white/5 rounded-2xl p-6 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-white/40">Subtotal</span>
-                <span className="text-white font-medium">$100.00</span>
+                <span className="text-white font-medium">${selectedOrder.total_amount?.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-white/40">Shipping</span>
-                <span className="text-white font-medium">$10.00</span>
+                <span className="text-[#00C853] font-bold uppercase text-[10px]">Free</span>
               </div>
               <div className="flex justify-between text-lg font-black border-t border-white/10 pt-3">
                 <span className="text-white uppercase tracking-widest">Total</span>
-                <span className="text-[#FFD700]">{selectedOrder.total}</span>
+                <span className="text-[#FFD700]">${selectedOrder.total_amount?.toLocaleString()}</span>
               </div>
             </div>
 

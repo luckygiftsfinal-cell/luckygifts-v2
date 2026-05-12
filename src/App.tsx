@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { StoreProvider } from "./context/StoreContext";
 import { CartProvider } from "./context/CartContext";
 import { Toaster } from "sonner";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import HomePage from "./pages/HomePage";
 import WinnersPage from "./pages/WinnersPage";
 import FAQPage from "./pages/FAQPage";
@@ -47,6 +48,11 @@ export default function App() {
     <StoreProvider>
       <CartProvider>
         <AuthProvider>
+          <PayPalScriptProvider options={{ 
+            "client-id": (import.meta as any).env?.VITE_PAYPAL_CLIENT_ID || "test",
+            currency: "USD",
+            intent: "capture"
+          }}>
           <ScrollToTop />
           <AuthModal />
           <CartSidebar />
@@ -90,6 +96,7 @@ export default function App() {
           </main>
           
           {!isAdminRoute && <Footer />}
+          </PayPalScriptProvider>
         </AuthProvider>
       </CartProvider>
     </StoreProvider>

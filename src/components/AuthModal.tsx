@@ -25,13 +25,13 @@ export default function AuthModal() {
     setLoading(true);
     try {
       if (mode === "login") {
-        await login(email);
+        await login(email, password);
       } else {
-        await register(name, email, phone);
+        await register(name, email, phone, password);
       }
       
       // Auto-redirect admin to dashboard
-      if (email.toLowerCase() === "admin@luckygifts.com") {
+      if (email.toLowerCase() === "luckygiftsfinal@gmail.com") {
         navigate("/admin");
       }
     } finally {

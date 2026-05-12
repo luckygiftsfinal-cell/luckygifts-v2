@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
+import { supabase } from "../lib/supabase";
 
 interface User {
   id: string;
@@ -8,6 +9,7 @@ interface User {
   phone?: string;
   vipLevel: "None" | "Gold" | "Diamond";
   role: "user" | "admin";
+  ticketBalance: number;
 }
 
 interface AuthContextType {
@@ -19,9 +21,9 @@ interface AuthContextType {
   addTickets: (count: number) => void;
   isModalOpen: boolean;
   setModalOpen: (open: boolean) => void;
-  login: (email: string) => Promise<void>;
-  register: (name: string, email: string, phone: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password?: string) => Promise<void>;
+  register: (name: string, email: string, phone: string, password?: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,64 +37,152 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return saved ? parseInt(saved) : 0;
   });
 
-  const addTickets = (count: number) => {
-    const newVal = earnedTickets + count;
-    setEarnedTickets(newVal);
-    localStorage.setItem('earned_tickets', newVal.toString());
+  const addTickets = async (count: number) => {
+    if (!user) {
+      // For guest users, still use localStorage as fallback
+      const newVal = earnedTickets + count;
+      setEarnedTickets(newVal);
+      localStorage.setItem('earned_tickets', newVal.toString());
+      return;
+    }
+
+    const newBalance = (user.ticketBalance || 0) + count;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ ticket_balance: newBalance })
+      .eq('id', user.id);
+
+    if (!error) {
+      setUser({ ...user, ticketBalance: newBalance });
+      setEarnedTickets(newBalance);
+      localStorage.setItem('earned_tickets', newBalance.toString());
+    } else {
+      console.error("Error updating tickets:", error);
+      toast.error("Failed to update tickets in database");
+    }
   };
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("lg_user");
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {}
-    }
-    setIsLoading(false);
+    // Check active sessions and sets the user
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: profile.full_name,
+            phone: profile.phone,
+            role: profile.role,
+            vipLevel: profile.vip_level,
+            ticketBalance: profile.ticket_balance || 0
+          });
+          setEarnedTickets(profile.ticket_balance || 0);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: profile.full_name,
+            phone: profile.phone,
+            role: profile.role,
+            vipLevel: profile.vip_level,
+            ticketBalance: profile.ticket_balance || 0
+          });
+          setEarnedTickets(profile.ticket_balance || 0);
+        }
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    const role = email.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
-    
-    const mockUser: User = {
-      id: "usr_" + Math.random().toString(36).substr(2, 9),
-      name: email.split("@")[0],
-      email: email,
-      vipLevel: "None",
-      role: role
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem("lg_user", JSON.stringify(mockUser));
+  const login = async (email: string, password?: string) => {
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: password || "",
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setIsLoading(false);
+      return;
+    }
+
     setModalOpen(false);
-    toast.success(`Welcome back, ${mockUser.name}!`);
+    toast.success(`Welcome back!`);
+    setIsLoading(false);
   };
 
-  const register = async (name: string, email: string, phone: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    const role = email.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
-    
-    const mockUser: User = {
-      id: "usr_" + Math.random().toString(36).substr(2, 9),
-      name: name,
-      email: email,
-      phone: phone,
-      vipLevel: "None",
-      role: role
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem("lg_user", JSON.stringify(mockUser));
+  const register = async (name: string, email: string, phone: string, password?: string) => {
+    setIsLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: password || "",
+      options: {
+        data: {
+          full_name: name,
+          phone: phone
+        }
+      }
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setIsLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      // Role logic: check if it's the admin email
+      const role = email.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
+      
+      const { error: profileError } = await supabase.from('profiles').insert([
+        {
+          id: data.user.id,
+          full_name: name,
+          phone: phone,
+          role: role,
+          vip_level: "None"
+        }
+      ]);
+
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+      }
+    }
+
     setModalOpen(false);
     toast.success(`Account created successfully!`);
+    setIsLoading(false);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem("lg_user");
     toast.info("You have been logged out.");
   };
 

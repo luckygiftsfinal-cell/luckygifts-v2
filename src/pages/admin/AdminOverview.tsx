@@ -7,12 +7,11 @@ export default function AdminOverview() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const totalRevenue = orders.reduce((acc, order) => {
-    const val = parseFloat(order.total.replace('$', '').replace(',', '')) || 0;
-    return acc + val;
+    return acc + (order.total_amount || 0);
   }, 0);
 
-  const deliveredRevenue = orders.filter(o => o.status === "Delivered").reduce((acc, o) => acc + parseFloat(o.total.replace('$', '')), 0);
-  const pendingRevenue = orders.filter(o => o.status === "Pending").reduce((acc, o) => acc + parseFloat(o.total.replace('$', '')), 0);
+  const deliveredRevenue = orders.filter(o => o.status === "paid").reduce((acc, o) => acc + (o.total_amount || 0), 0);
+  const pendingRevenue = orders.filter(o => o.status === "Pending").reduce((acc, o) => acc + (o.total_amount || 0), 0);
 
   const stats = [
     { id: 'revenue', title: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, change: "+20.1%", icon: <DollarSign size={24} />, color: "text-[#00C853]", bg: "bg-[#00C853]/10" },
@@ -103,8 +102,8 @@ export default function AdminOverview() {
                   <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Top Transactions</h4>
                   {orders.slice(0, 3).map(o => (
                     <div key={o.id} className="flex justify-between items-center p-4 bg-white/5 rounded-xl">
-                      <span className="text-white font-bold">{o.user}</span>
-                      <span className="text-[#FFD700] font-black">{o.total}</span>
+                      <span className="text-white font-bold">{o.full_name}</span>
+                      <span className="text-[#FFD700] font-black">${(o.total_amount || 0).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>

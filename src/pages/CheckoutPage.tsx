@@ -7,7 +7,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import PayPalModal from "../components/PayPalModal";
+import CryptoModal from "../components/CryptoModal";
 import { useAuth } from "../context/AuthContext";
+import { useStore } from "../context/StoreContext";
+import { sendOrderConfirmationEmail } from "../lib/emailService";
 
 export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart, totalTickets } = useCart();
@@ -18,12 +21,57 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPayPalOpen, setIsPayPalOpen] = useState(false);
+  const [isCryptoOpen, setIsCryptoOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     address: "",
     phone: ""
   });
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const { addOrder, issueTickets, validatePromoCode } = useStore();
+
+  React.useEffect(() => {
+    // Refresh Lemon Squeezy to listen for new DOM elements if necessary
+    if ((window as any).createLemonSqueezy) {
+      (window as any).createLemonSqueezy();
+    }
+  }, []);
+
+  const handleLemonSqueezyCheckout = () => {
+    setIsProcessing(true);
+    
+    // In a real app, you'd fetch a dynamic checkout link from your backend/Edge Function
+    // For now, we use the Lemon Squeezy Overlay URL pattern
+    const checkoutUrl = `https://luckygifts25.lemonsqueezy.com/checkout/buy/fe49437c-212e-4e0f-bab5-7e51bdd8dbd8?embed=1&checkout[email]=${formData.email}&checkout[name]=${formData.name}`;
+
+    if ((window as any).LemonSqueezy) {
+      (window as any).LemonSqueezy.Url.Open(checkoutUrl);
+      setIsProcessing(false);
+    } else {
+      toast.error("Lemon Squeezy SDK not loaded");
+      setIsProcessing(false);
+    }
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoInput) return;
+    const promo = await validatePromoCode(promoInput);
+    if (promo) {
+      setAppliedPromo(promo);
+      toast.success(lang === 'AR' ? "تم تطبيق كود الخصم!" : "Promo code applied!");
+    } else {
+      toast.error(lang === 'AR' ? "كود خصم غير صالح" : "Invalid promo code");
+    }
+  };
+
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    return (totalPrice * appliedPromo.discount_percent) / 100;
+  };
+
+  const finalTotal = totalPrice - calculateDiscount();
 
   const handleCheckout = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,29 +87,59 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     if (paymentMethod === 'card') {
-      // Lemon Squeezy Flow
-      setTimeout(() => {
-        setIsProcessing(false);
-        toast.info(lang === 'AR' ? "يتم توجيهك إلى Lemon Squeezy..." : "Redirecting to Lemon Squeezy...", {
-          icon: "💳"
-        });
-        setTimeout(() => {
-          toast.success(lang === 'AR' ? "تم فتح بوابة الدفع!" : "Checkout opened!");
-        }, 1500);
-      }, 1000);
+      handleLemonSqueezyCheckout();
     } else if (paymentMethod === 'paypal') {
       // PayPal Flow - Open Modal
       setIsProcessing(false);
       setIsPayPalOpen(true);
     } else {
-      // Crypto Flow
-      setTimeout(() => {
-        toast.info(lang === 'AR' ? "جاري توليد عنوان المحفظة..." : "Generating wallet address...", { icon: "₿" });
-        setTimeout(() => {
-          setIsProcessing(false);
-          toast.success(lang === 'AR' ? "تم إنشاء طلب الدفع بالكريبتو." : "Crypto payment request created.");
-        }, 2000);
-      }, 1000);
+      // Crypto Flow - Open Modal
+      setIsProcessing(false);
+      setIsCryptoOpen(true);
+    }
+  };
+
+  const handleCryptoSuccess = async (txHash: string) => {
+    setIsCryptoOpen(false);
+    setIsProcessing(true);
+    try {
+      const orderId = await addOrder({
+        user_id: user?.id,
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        total_amount: finalTotal,
+        discount_amount: calculateDiscount(),
+        payment_method: 'crypto',
+        status: 'pending_verification', // New status for crypto
+        items: items,
+        tickets_earned: totalTickets,
+        payment_details: { txHash },
+        referrer_id: localStorage.getItem('luckygifts_ref') || undefined
+      } as any);
+
+      if (user?.id && orderId) {
+        const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
+        
+        await sendOrderConfirmationEmail({
+          toEmail: formData.email,
+          userName: formData.name,
+          orderId: orderId,
+          totalAmount: totalPrice.toString(),
+          items: items,
+          tickets: ticketCodes
+        });
+      }
+      
+      await addTickets(totalTickets);
+      setIsProcessing(false);
+      toast.success(lang === 'AR' ? "تم إرسال طلب الدفع. بانتظار التأكيد." : "Payment submitted. Waiting for verification.");
+      clearCart();
+      navigate("/");
+    } catch (err) {
+      setIsProcessing(false);
+      toast.error("Failed to save order");
     }
   };
 
@@ -260,12 +338,41 @@ export default function CheckoutPage() {
                     <span className="text-white">{formatPrice(totalPrice)}</span>
                   </div>
                   <div className="flex justify-between items-center text-white/40 text-xs font-black uppercase tracking-widest">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(totalPrice)}</span>
+                  </div>
+                  {appliedPromo && (
+                    <div className="flex justify-between items-center text-[#00C853] text-xs font-black uppercase tracking-widest mt-2">
+                      <span>Discount ({appliedPromo.discount_percent}%)</span>
+                      <span>-{formatPrice(calculateDiscount())}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-white/40 text-xs font-black uppercase tracking-widest mt-2">
                     <span>Shipping</span>
                     <span className="text-[#00C853]">FREE</span>
                   </div>
-                  <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                  <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
                     <span className="text-sm font-black text-white uppercase tracking-widest">Total</span>
-                    <span className="text-2xl font-black text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">{formatPrice(totalPrice)}</span>
+                    <span className="text-2xl font-black text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">{formatPrice(finalTotal)}</span>
+                  </div>
+                </div>
+
+                {/* Promo Code Input */}
+                <div className="mt-6">
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder={lang === 'AR' ? "كود الخصم" : "PROMO CODE"}
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value)}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#FFD700]/50 transition-all placeholder:text-white/20 uppercase font-black tracking-widest"
+                    />
+                    <button 
+                      onClick={handleApplyPromo}
+                      className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+                    >
+                      Apply
+                    </button>
                   </div>
                 </div>
 
@@ -307,13 +414,52 @@ export default function CheckoutPage() {
         isOpen={isPayPalOpen} 
         onClose={() => setIsPayPalOpen(false)} 
         amount={formatPrice(totalPrice)}
-        onSuccess={() => {
+        onSuccess={async () => {
           setIsPayPalOpen(false);
           toast.success(lang === 'AR' ? "تم الدفع بنجاح!" : "Payment successful!");
-          addTickets(totalTickets);
-          clearCart();
-          navigate("/");
+          try {
+            const orderId = await addOrder({
+              user_id: user?.id,
+              full_name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              address: formData.address,
+              total_amount: finalTotal,
+              discount_amount: calculateDiscount(),
+              payment_method: 'paypal',
+              status: 'paid',
+              items: items,
+              tickets_earned: totalTickets,
+              referrer_id: localStorage.getItem('luckygifts_ref') || undefined
+            } as any);
+
+            if (user?.id && orderId) {
+              const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
+
+              // Send Email
+              await sendOrderConfirmationEmail({
+                toEmail: formData.email,
+                userName: formData.name,
+                orderId: orderId,
+                totalAmount: totalPrice.toString(),
+                items: items,
+                tickets: ticketCodes
+              });
+            }
+
+            await addTickets(totalTickets);
+            clearCart();
+            navigate("/");
+          } catch (err) {
+            toast.error("Failed to save order to database");
+          }
         }}
+      />
+      <CryptoModal
+        isOpen={isCryptoOpen}
+        onClose={() => setIsCryptoOpen(false)}
+        onSuccess={handleCryptoSuccess}
+        amount={formatPrice(totalPrice)}
       />
       </div>
     </div>

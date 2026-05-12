@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Lock, ChevronRight, X } from "lucide-react";
+import { Shield, Lock, X } from "lucide-react";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
 interface PayPalModalProps {
   isOpen: boolean;
@@ -10,26 +9,8 @@ interface PayPalModalProps {
 }
 
 export default function PayPalModal({ isOpen, onClose, onSuccess, amount }: PayPalModalProps) {
-  const [step, setStep] = useState(1); // 1: Login, 2: Review, 3: Processing
-  const [email, setEmail] = useState("");
-
-  useEffect(() => {
-    if (!isOpen) {
-      setStep(1);
-    }
-  }, [isOpen]);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep(2);
-  };
-
-  const handlePay = () => {
-    setStep(3);
-    setTimeout(() => {
-      onSuccess();
-    }, 2000);
-  };
+  // Extract numeric value from amount string (e.g., "$100.00" -> "100.00")
+  const numericAmount = amount.replace(/[^0-9.]/g, '');
 
   return (
     <AnimatePresence>
@@ -59,91 +40,52 @@ export default function PayPalModal({ isOpen, onClose, onSuccess, amount }: PayP
             </div>
 
             <div className="flex-1 p-8">
-              {step === 1 && (
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-6"
-                >
-                  <h3 className="text-xl font-bold text-[#2c2e2f] text-center">Pay with PayPal</h3>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-1">
-                      <input 
-                        required
-                        type="email" 
-                        placeholder="Email or mobile number"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg p-4 text-sm focus:border-[#0070ba] focus:ring-1 focus:ring-[#0070ba] outline-none transition-all"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <input 
-                        required
-                        type="password" 
-                        placeholder="Password"
-                        className="w-full border border-gray-300 rounded-lg p-4 text-sm focus:border-[#0070ba] focus:ring-1 focus:ring-[#0070ba] outline-none transition-all"
-                      />
-                    </div>
-                    <button type="submit" className="w-full bg-[#0070ba] hover:bg-[#005ea6] text-white font-bold py-4 rounded-full transition-colors">
-                      Log In
-                    </button>
-                    <div className="text-center">
-                      <a href="#" className="text-sm font-bold text-[#0070ba] hover:underline">Forgot password?</a>
-                    </div>
-                  </form>
-                  <div className="relative flex items-center justify-center py-4">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-                    <span className="relative px-4 bg-white text-gray-500 text-xs">or</span>
-                  </div>
-                  <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-full transition-colors">
-                    Create an Account
-                  </button>
-                </motion.div>
-              )}
+              <div className="text-center mb-8">
+                <h3 className="text-xl font-bold text-[#2c2e2f] mb-1">Complete Your Purchase</h3>
+                <p className="text-sm text-gray-500 italic">Total Amount: <span className="text-[#003087] font-black">{amount}</span></p>
+              </div>
 
-              {step === 2 && (
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-8"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">Ship to</div>
-                    <div className="text-sm font-bold text-gray-900">John Doe ...</div>
-                  </div>
-                  <div className="border-t border-gray-100 pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="text-sm text-gray-600 font-bold uppercase tracking-widest">Amount to Pay</div>
-                      <div className="text-xl font-black text-[#003087]">{amount}</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-3">
-                      <div className="w-10 h-6 bg-[#003087] rounded flex items-center justify-center text-white text-[8px] font-bold italic">PayPal</div>
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-gray-900">PayPal Balance</p>
-                        <p className="text-[10px] text-gray-500">Available: $2,450.00</p>
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={handlePay}
-                    className="w-full bg-[#0070ba] hover:bg-[#005ea6] text-white font-bold py-4 rounded-full transition-colors flex items-center justify-center gap-2"
-                  >
-                    Complete Purchase
-                    <ChevronRight size={18} />
-                  </button>
-                  <p className="text-[10px] text-gray-400 text-center leading-relaxed">
-                    By clicking Complete Purchase, you agree to PayPal's User Agreement and Privacy Statement.
-                  </p>
-                </motion.div>
-              )}
+              <div className="space-y-4">
+                <PayPalButtons 
+                  style={{ 
+                    layout: "vertical",
+                    color: "gold",
+                    shape: "pill",
+                    label: "paypal"
+                  }}
+                  createOrder={(data, actions) => {
+                    return actions.order.create({
+                      intent: "CAPTURE",
+                      purchase_units: [
+                        {
+                          amount: {
+                            currency_code: "USD",
+                            value: numericAmount,
+                          },
+                        },
+                      ],
+                    });
+                  }}
+                  onApprove={(data, actions) => {
+                    if (actions.order) {
+                      return actions.order.capture().then((details) => {
+                        onSuccess();
+                      });
+                    }
+                    return Promise.resolve();
+                  }}
+                  onCancel={() => {
+                    // Handle cancel
+                  }}
+                  onError={(err) => {
+                    console.error("PayPal Error:", err);
+                  }}
+                />
+              </div>
 
-              {step === 3 && (
-                <div className="h-full flex flex-col items-center justify-center py-20 space-y-6">
-                  <div className="w-16 h-16 border-4 border-[#0070ba] border-t-transparent rounded-full animate-spin" />
-                  <p className="font-bold text-gray-700">Authorizing payment...</p>
-                </div>
-              )}
+              <p className="text-[10px] text-gray-400 text-center leading-relaxed mt-6">
+                Your payment is secure and encrypted. <br /> By proceeding, you agree to PayPal's terms.
+              </p>
             </div>
 
             {/* Footer */}

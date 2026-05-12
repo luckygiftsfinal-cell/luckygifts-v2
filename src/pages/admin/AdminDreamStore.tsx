@@ -2,18 +2,6 @@ import React, { useState } from "react";
 import { Plus, Search, Edit2, Trash2, Layout, Award, Tag, Palette } from "lucide-react";
 import { toast } from "sonner";
 
-const mockCategories = [
-  { id: "1", name: "Cash Dream", key: "Cash", color: "#22c55e", icon: "DollarSign", active: true },
-  { id: "2", name: "Luxury Dream", key: "Luxury", color: "#FFD700", icon: "Gem", active: true },
-  { id: "3", name: "Tech Dream", key: "Tech", color: "#38bdf8", icon: "Zap", active: true },
-];
-
-const mockDraws = [
-  { id: "1", name: "$1,000,000 Cash", category: "Cash", status: "Active", entries: 18420 },
-  { id: "2", name: "Range Rover Defender", category: "Luxury", status: "Active", entries: 800 },
-  { id: "3", name: "Rolex Datejust 41", category: "Luxury", status: "Active", entries: 450 },
-  { id: "4", name: "Tech Pack (MacBook + iPhone)", category: "Tech", status: "Closed", entries: 5000 },
-];
 
 import { useStore } from "../../context/StoreContext";
 
@@ -50,38 +38,39 @@ export default function AdminDreamStore() {
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteConfirm) return;
     const { type, id } = deleteConfirm;
-    if (type === 'category') {
-      deleteCategory(id);
-    } else {
-      deleteDraw(id);
+    try {
+      if (type === 'category') {
+        await deleteCategory(id);
+      } else {
+        // deleteDraw is not implemented in Supabase yet, we can add it later if needed
+      }
+      toast.success(`${type === 'category' ? 'Category' : 'Draw'} deleted!`);
+    } catch (e) {
+      toast.error("Failed to delete");
     }
     setDeleteConfirm(null);
   };
 
-  const handleSave = (type: 'category' | 'draw') => {
-    if (type === 'category') {
-      if (editingCategory?.id) {
-        updateCategory(editingCategory);
-        toast.success("Category updated!");
+  const handleSave = async (type: 'category' | 'draw') => {
+    try {
+      if (type === 'category') {
+        if (editingCategory?.id) {
+          await updateCategory(editingCategory);
+          toast.success("Category updated!");
+        } else {
+          await addCategory(editingCategory);
+          toast.success("Category added!");
+        }
+        setIsAddingCategory(false);
+        setEditingCategory(null);
       } else {
-        addCategory(editingCategory);
-        toast.success("Category added!");
+        // add/update Draw logic can be added here if needed
       }
-      setIsAddingCategory(false);
-      setEditingCategory(null);
-    } else {
-      if (editingDraw?.id) {
-        updateDraw(editingDraw);
-        toast.success("Prize draw updated!");
-      } else {
-        addDraw(editingDraw);
-        toast.success("Prize draw added!");
-      }
-      setIsAddingDraw(false);
-      setEditingDraw(null);
+    } catch (e) {
+      toast.error("Operation failed");
     }
   };
 

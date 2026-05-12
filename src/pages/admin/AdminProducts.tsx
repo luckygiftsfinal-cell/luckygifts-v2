@@ -8,7 +8,7 @@ export default function AdminProducts() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
-  const handleProductAction = (action: string, productId: string, title: string) => {
+  const handleProductAction = async (action: string, productId: string, title: string) => {
     if (action === "edit") {
       const product = products.find(p => p.id === productId);
       if (product) {
@@ -17,22 +17,30 @@ export default function AdminProducts() {
       }
     }
     if (action === "delete") {
-      deleteProduct(productId);
-      toast.error(`${title} deleted successfully`);
+      try {
+        await deleteProduct(productId);
+        toast.error(`${title} deleted successfully`);
+      } catch (e) {
+        toast.error("Failed to delete product");
+      }
     }
     if (action === "save") {
-      if (editingProduct?.id) {
-        updateProduct(editingProduct);
-        toast.success("Product updated successfully!", { icon: "📦" });
-      } else {
-        // Find category automatically from the selected prize
-        const selectedDraw = draws.find(d => d.name === editingProduct.prize);
-        const finalProduct = { ...editingProduct, category: selectedDraw?.category || "Cash" };
-        addProduct(finalProduct);
-        toast.success("Product created successfully!", { icon: "📦" });
+      try {
+        if (editingProduct?.id) {
+          await updateProduct(editingProduct);
+          toast.success("Product updated successfully!", { icon: "📦" });
+        } else {
+          // Find category automatically from the selected prize
+          const selectedDraw = draws.find(d => d.name === editingProduct.prize);
+          const finalProduct = { ...editingProduct, category: selectedDraw?.category || "Cash" };
+          await addProduct(finalProduct);
+          toast.success("Product created successfully!", { icon: "📦" });
+        }
+        setIsAdding(false);
+        setEditingProduct(null);
+      } catch (e) {
+        toast.error("Failed to save product");
       }
-      setIsAdding(false);
-      setEditingProduct(null);
     }
   };
 

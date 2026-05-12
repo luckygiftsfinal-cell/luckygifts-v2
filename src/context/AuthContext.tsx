@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string) => {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    const role = email.toLowerCase() === "admin@luckygifts.com" ? "admin" : "user";
+    const role = email.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
     
     const mockUser: User = {
       id: "usr_" + Math.random().toString(36).substr(2, 9),
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (name: string, email: string, phone: string) => {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    const role = email.toLowerCase() === "admin@luckygifts.com" ? "admin" : "user";
+    const role = email.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
     
     const mockUser: User = {
       id: "usr_" + Math.random().toString(36).substr(2, 9),

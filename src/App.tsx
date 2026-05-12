@@ -49,7 +49,7 @@ export default function App() {
       <CartProvider>
         <AuthProvider>
           <PayPalScriptProvider options={{ 
-            "client-id": (import.meta as any).env?.VITE_PAYPAL_CLIENT_ID || "test",
+            "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID || "test",
             currency: "USD",
             intent: "capture"
           }}>

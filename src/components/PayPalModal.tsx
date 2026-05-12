@@ -1,5 +1,6 @@
 import { Shield, Lock, X } from "lucide-react";
 import { PayPalButtons } from "@paypal/react-paypal-js";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PayPalModalProps {
   isOpen: boolean;

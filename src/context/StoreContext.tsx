@@ -296,6 +296,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!error) fetchData();
   };
 
+  const updateVIPPackage = (pkg: VIPPackage) => {
+    setVipPackages(prev => prev.map(p => p.id === pkg.id ? pkg : p));
+  };
+
   return (
     <StoreContext.Provider value={{ 
       categories, draws, products, orders, tickets, promoCodes, vipPackages, loading,

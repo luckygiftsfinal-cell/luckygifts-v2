@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Cairo:wght@200..1000&display=swap');
+@import "tailwindcss";
+
+:root {
+  --primary-yellow: #FFD700;
+  --bright-yellow:  #FFFF00;
+  --dark-yellow:    #FFC107;
+  --bg-deep:    #050505;
+  --text-primary:   #FFFFFF;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  margin: 0;
+}
+
+.font-arabic {
+  font-family: 'Cairo', sans-serif !important;
+}
+
+.text-gold {
+  background: linear-gradient(135deg, var(--primary-yellow), var(--bright-yellow), var(--dark-yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold {
+  background: linear-gradient(135deg, var(--primary-yellow), var(--bright-yellow), var(--dark-yellow));
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-yellow), var(--bright-yellow), var(--dark-yellow));
+  color: #000;
+  padding: 12px 28px;
+  border-radius: 99px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+}
+
+.glass {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.container {
+  max-width: 95%;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.ticker-wrap { overflow: hidden; white-space: nowrap; background: linear-gradient(90deg, var(--dark-yellow), var(--primary-yellow), var(--bright-yellow)); }
+.ticker-inner {
+  display: inline-flex;
+  animation: ticker 40s linear infinite;
+}
+
+.animate-ticker {
+  animation: ticker 30s linear infinite;
+}
+
+@keyframes ticker { 
+  0% { transform: translateX(0); } 
+  100% { transform: translateX(-50%); } 
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: #000000;
+  margin: 0;
+  padding: 0;
+}
+
+/* Global Luxury Gold Scrollbar Styles */
+*::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: #000000 !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #FFD700 !important;
+  border-radius: 20px !important;
+  border: 2px solid #000000 !important;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #FFFF00 !important;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: #FFD700 #000000 !important;
+}
+
+/* Style Select Options Globally */
+select option {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  padding: 10px !important;
+}
+
+.noise-overlay {
+  position: fixed; inset: 0; pointer-events: none; opacity: 0.02; z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

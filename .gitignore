@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.production
 .env.development
+
+# Local Netlify folder
+.netlify

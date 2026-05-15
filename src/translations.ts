@@ -144,7 +144,6 @@ export const translations = {
     minutes: "دقيقة",
     seconds: "ثانية",
     verifiedWinnersCount: "+12,400 فائز موثق",
-    verifiedWinnersCount: "+12,400 فائز موثق",
     trustScoreLabel: "4.9/5 درجة الثقة",
     shopAndWin: "تسوق الآن واربح الكثير",
     earned: "مكتسبة",

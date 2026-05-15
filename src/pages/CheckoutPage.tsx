@@ -40,18 +40,42 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const handleLemonSqueezyCheckout = () => {
+  const handleLemonSqueezyCheckout = async () => {
     setIsProcessing(true);
     
-    // In a real app, you'd fetch a dynamic checkout link from your backend/Edge Function
-    // For now, we use the Lemon Squeezy Overlay URL pattern
-    const checkoutUrl = `https://luckygifts25.lemonsqueezy.com/checkout/buy/fe49437c-212e-4e0f-bab5-7e51bdd8dbd8?embed=1&checkout[email]=${formData.email}&checkout[name]=${formData.name}`;
+    try {
+      const response = await fetch("/.netlify/functions/create-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items,
+          userName: formData.name,
+          userEmail: formData.email,
+          totalPrice: finalTotal
+        })
+      });
 
-    if ((window as any).LemonSqueezy) {
-      (window as any).LemonSqueezy.Url.Open(checkoutUrl);
-      setIsProcessing(false);
-    } else {
-      toast.error("Lemon Squeezy SDK not loaded");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout");
+      }
+
+      if (data.checkoutUrl) {
+        if ((window as any).LemonSqueezy) {
+          (window as any).LemonSqueezy.Url.Open(data.checkoutUrl);
+        } else {
+          window.location.href = data.checkoutUrl;
+        }
+      }
+    } catch (error: any) {
+      console.error("Lemon Squeezy Error:", error);
+      toast.error(lang === 'AR' ? "فشل إنشاء رابط الدفع" : "Failed to create checkout link", {
+        description: error.message
+      });
+    } finally {
       setIsProcessing(false);
     }
   };

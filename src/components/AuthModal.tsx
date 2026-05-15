@@ -3,9 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { X, Mail, Lock, User, ArrowRight, Loader2, Phone, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { isValidPhone } from "../lib/validation";
+import { toast } from "sonner";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function AuthModal() {
   const { isModalOpen, setModalOpen, login, register } = useAuth();
+  const { lang } = useLanguage();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "register">("login");
   
@@ -21,6 +25,13 @@ export default function AuthModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || (mode === "register" && (!name || !phone))) return;
+
+    if (mode === "register" && !isValidPhone(phone)) {
+      toast.error(lang === 'AR' ? "رقم الهاتف غير صالح" : "Invalid phone number", {
+        description: lang === 'AR' ? "يرجى إدخال رقم هاتف صحيح (7-15 رقم)" : "Please enter a valid phone number (7-15 digits)."
+      });
+      return;
+    }
     
     setLoading(true);
     try {
@@ -30,10 +41,14 @@ export default function AuthModal() {
         await register(name, email, phone, password);
       }
       
-      // Auto-redirect admin to dashboard
+      // Auto-redirect admin to dashboard - only if login was successful
+      // The login function in context handles its own success state and closes modal
       if (email.toLowerCase() === "luckygiftsfinal@gmail.com") {
-        navigate("/admin");
+        setTimeout(() => navigate("/admin"), 500);
       }
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      toast.error(lang === 'AR' ? "حدث خطأ ما أثناء تسجيل الدخول" : "An error occurred during authentication");
     } finally {
       setLoading(false);
     }

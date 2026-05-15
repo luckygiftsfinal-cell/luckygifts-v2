@@ -11,6 +11,7 @@ import CryptoModal from "../components/CryptoModal";
 import { useAuth } from "../context/AuthContext";
 import { useStore } from "../context/StoreContext";
 import { sendOrderConfirmationEmail } from "../lib/emailService";
+import { isValidPhone } from "../lib/validation";
 
 export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart, totalTickets } = useCart();
@@ -80,6 +81,13 @@ export default function CheckoutPage() {
     if (!formData.name || !formData.email || !formData.address || !formData.phone) {
       toast.error(lang === 'AR' ? "يرجى إكمال جميع البيانات المطلوبة" : "Please complete all required fields", {
         description: lang === 'AR' ? "عنوان الشحن والبيانات الشخصية إلزامية" : "Shipping address and personal details are mandatory."
+      });
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      toast.error(lang === 'AR' ? "رقم الهاتف غير صالح" : "Invalid phone number", {
+        description: lang === 'AR' ? "يرجى إدخال رقم هاتف صحيح (7-15 رقم)" : "Please enter a valid phone number (7-15 digits)."
       });
       return;
     }
@@ -168,8 +176,8 @@ export default function CheckoutPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-4xl font-black text-white uppercase tracking-tighter italic">Secure Checkout</h1>
-            <p className="text-white/40 text-xs font-black uppercase tracking-[0.2em] mt-1">Complete your order and win big</p>
+            <h1 className="text-4xl font-black text-white uppercase tracking-tighter italic">{t("secureCheckout")}</h1>
+            <p className="text-white/40 text-xs font-black uppercase tracking-[0.2em] mt-1">{t("completeOrderDesc")}</p>
           </div>
         </div>
 
@@ -185,12 +193,12 @@ export default function CheckoutPage() {
                 <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700]">
                   <User size={20} />
                 </div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">Shipping Details</h3>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("shippingDetails")}</h3>
               </div>
 
               <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Full Name <span className="text-[#FFD700]">*</span></label>
+                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("fullName")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                     <input 
@@ -203,7 +211,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Email Address <span className="text-[#FFD700]">*</span></label>
+                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("emailAddress")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                     <input 
@@ -216,7 +224,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Shipping Address <span className="text-[#FFD700]">*</span></label>
+                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("shippingAddress")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                     <input 
@@ -229,7 +237,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Phone Number <span className="text-[#FFD700]">*</span></label>
+                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("phoneNumber")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                     <input 
@@ -254,7 +262,7 @@ export default function CheckoutPage() {
                 <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700]">
                   <CreditCard size={20} />
                 </div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">Payment Method</h3>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("paymentMethod")}</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -283,7 +291,7 @@ export default function CheckoutPage() {
                 <div className="flex items-start gap-4 p-5 bg-white/5 border border-white/10 rounded-2xl">
                   {paymentMethod === 'card' ? <Lock className="text-[#FFD700] shrink-0 mt-1" size={20} /> : <ShieldCheck className="text-[#00C853] shrink-0 mt-1" size={20} />}
                   <div className="space-y-1">
-                    <p className="text-xs text-white/80 font-bold uppercase tracking-wide">Secure Transaction</p>
+                    <p className="text-xs text-white/80 font-bold uppercase tracking-wide">{t("secureTransaction")}</p>
                     <p className="text-[10px] text-white/40 font-medium leading-relaxed">
                       {lang === 'AR' 
                         ? "سيتم إتمام عملية الدفع بشكل آمن. نحن لا نقوم بتخزين بيانات بطاقتك الائتمانية." 
@@ -296,7 +304,7 @@ export default function CheckoutPage() {
                   <div className="flex-1" />
                   <div className="flex items-center gap-2 text-white/20">
                     <ShieldCheck size={14} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em]">SSL Encrypted Connection</span>
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em]">{t("sslEncrypted")}</span>
                   </div>
                 </div>
               </div>
@@ -313,7 +321,7 @@ export default function CheckoutPage() {
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD700]/5 blur-3xl rounded-full" />
                 
-                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-8">Order Summary</h3>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-8">{t("orderSummary")}</h3>
                 
                 <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar mb-8">
                   {items.map((item) => (
@@ -334,12 +342,8 @@ export default function CheckoutPage() {
 
                 <div className="space-y-4 pt-6 border-t border-white/10">
                   <div className="flex justify-between items-center text-white/40 text-xs font-black uppercase tracking-widest">
-                    <span>Subtotal</span>
+                    <span>{t("subtotal")}</span>
                     <span className="text-white">{formatPrice(totalPrice)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-white/40 text-xs font-black uppercase tracking-widest">
-                    <span>Subtotal</span>
-                    <span>{formatPrice(totalPrice)}</span>
                   </div>
                   {appliedPromo && (
                     <div className="flex justify-between items-center text-[#00C853] text-xs font-black uppercase tracking-widest mt-2">
@@ -348,11 +352,11 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   <div className="flex justify-between items-center text-white/40 text-xs font-black uppercase tracking-widest mt-2">
-                    <span>Shipping</span>
-                    <span className="text-[#00C853]">FREE</span>
+                    <span>{t("shipping")}</span>
+                    <span className="text-[#00C853]">{t("free")}</span>
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
-                    <span className="text-sm font-black text-white uppercase tracking-widest">Total</span>
+                    <span className="text-sm font-black text-white uppercase tracking-widest">{t("total")}</span>
                     <span className="text-2xl font-black text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">{formatPrice(finalTotal)}</span>
                   </div>
                 </div>
@@ -362,7 +366,7 @@ export default function CheckoutPage() {
                   <div className="flex gap-2">
                     <input 
                       type="text" 
-                      placeholder={lang === 'AR' ? "كود الخصم" : "PROMO CODE"}
+                      placeholder={t("promoCode")}
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value)}
                       className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#FFD700]/50 transition-all placeholder:text-white/20 uppercase font-black tracking-widest"
@@ -371,7 +375,7 @@ export default function CheckoutPage() {
                       onClick={handleApplyPromo}
                       className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
                     >
-                      Apply
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -380,10 +384,10 @@ export default function CheckoutPage() {
                   <div className="bg-[#FFD700]/5 border border-[#FFD700]/20 rounded-2xl p-6 mb-8">
                     <div className="flex items-center gap-3 text-[#FFD700] mb-2">
                       <ShieldCheck size={24} />
-                      <span className="text-xs font-black uppercase tracking-widest">LuckyGifts Guarantee</span>
+                      <span className="text-xs font-black uppercase tracking-widest">{t("guaranteeTitle")}</span>
                     </div>
                     <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest leading-relaxed">
-                      Your purchase is protected. All draws are certified and results are published transparently.
+                      {t("guaranteeDesc")}
                     </p>
                   </div>
 
@@ -395,12 +399,12 @@ export default function CheckoutPage() {
                     {isProcessing ? (
                       <>
                         <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                        Processing...
+                        {t("processing")}
                       </>
                     ) : (
                       <>
                         <Lock size={18} />
-                        Complete Payment
+                        {t("completePayment")}
                         <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                       </>
                     )}

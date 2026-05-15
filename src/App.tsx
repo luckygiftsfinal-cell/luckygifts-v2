@@ -23,6 +23,8 @@ import AboutUsPage from "./pages/AboutUsPage";
 import WhyTrustUsPage from "./pages/WhyTrustUsPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import WorkWithUsPage from "./pages/WorkWithUsPage";
+import ContactPage from "./pages/ContactPage";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -78,6 +80,8 @@ export default function App() {
               <Route path="/trust" element={<WhyTrustUsPage />} />
               <Route path="/orders" element={<OrderHistoryPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/work-with-us" element={<WorkWithUsPage />} />
+              <Route path="/contact" element={<ContactPage />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminLayout />}>

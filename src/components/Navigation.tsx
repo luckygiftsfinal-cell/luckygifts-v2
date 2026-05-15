@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Search, ChevronDown, Ticket, Crown } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { ShoppingCart, User, Search, ChevronDown, Ticket, Crown, Menu, X, Globe, Coins } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { useAuth } from "../context/AuthContext";
@@ -88,7 +89,7 @@ export default function Navigation() {
                 </div>
                 <div className="flex items-center gap-2 mt-1 w-full">
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent opacity-50" />
-                  <span className="text-[8px] font-black text-[#FFD700] uppercase tracking-[0.2em] whitespace-nowrap">Shop Now & Win Big</span>
+                  <span className="text-[8px] font-black text-[#FFD700] uppercase tracking-[0.2em] whitespace-nowrap">{t("shopAndWin")}</span>
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent opacity-50" />
                 </div>
               </div>
@@ -167,10 +168,10 @@ export default function Navigation() {
                 </div>
                 <div className="flex flex-col items-start justify-center">
                   <span className="text-[8px] font-black text-[#FFD700]/70 uppercase tracking-widest leading-none mb-0.5">
-                    {lang === 'AR' ? 'تذاكرك' : 'Earned'}
+                    {t("earned")}
                   </span>
                   <span className="text-sm font-black text-[#FFD700] leading-none uppercase tracking-tight">
-                    {earnedTickets} {lang === 'AR' ? 'تذكرة' : 'TICKETS'}
+                    {earnedTickets} {t("tickets")}
                   </span>
                 </div>
               </div>
@@ -203,15 +204,15 @@ export default function Navigation() {
                   {profileOpen && (
                     <div className="absolute top-full right-0 mt-2 w-48 glass rounded-2xl overflow-hidden shadow-2xl border border-white/10 py-2 z-[2000]">
                       <div className="px-4 py-2 border-b border-white/5 mb-2">
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Signed in as</p>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest">{t("signedInAs")}</p>
                         <p className="text-sm text-white font-black truncate">{user?.email}</p>
                       </div>
                       {isAdmin && (
                         <Link to="/admin" onClick={() => setProfileOpen(false)} className="block px-4 py-2 text-sm font-black text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors border-b border-white/5">
-                          Admin Dashboard
+                          {t("adminDashboard")}
                         </Link>
                       )}
-                      <Link to="/orders" onClick={() => setProfileOpen(false)} className="block px-4 py-2 text-sm font-bold text-white hover:bg-white/5 transition-colors">Order History</Link>
+                      <Link to="/orders" onClick={() => setProfileOpen(false)} className="block px-4 py-2 text-sm font-bold text-white hover:bg-white/5 transition-colors">{t("orderHistory")}</Link>
                       <button 
                         onClick={() => {
                           logout();
@@ -219,7 +220,7 @@ export default function Navigation() {
                         }}
                         className="w-full text-left px-4 py-2 text-sm font-bold text-[#FF4500] hover:bg-[#FF4500]/10 transition-colors mt-2 border-t border-white/5 pt-2"
                       >
-                        Logout
+                        {t("logout")}
                       </button>
                     </div>
                   )}
@@ -232,14 +233,22 @@ export default function Navigation() {
               >
                 <ShoppingCart size={18} />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFD700] text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,215,0,0.5)]">
+                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFD700] text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,215,0,0.5)]">
                     {totalItems}
                   </span>
                 )}
               </button>
+
+              <button 
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="lg:hidden w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/5 transition-colors"
+              >
+                {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
             </div>
           </div>
 
+          {/* Desktop Navigation Links */}
           <div className={`hidden lg:flex items-center gap-8 border-t border-white/5 pt-5 pb-2 ${isRTL ? 'flex-row-reverse justify-start' : ''}`}>
             <Link to="/" className={getLinkClass("/")}>{t("home")}</Link>
             <Link to="/store" className={getLinkClass("/store")}>{t("dreamStore")}</Link>
@@ -252,8 +261,95 @@ export default function Navigation() {
             <Link to="/winners" className={getLinkClass("/winners")}>{t("winners")}</Link>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="lg:hidden border-t border-white/10 overflow-hidden bg-[#0A0A0A]"
+            >
+              <div className="container py-8 space-y-6">
+                <div className="flex flex-col gap-4">
+                  {[
+                    { path: "/", label: t("home") },
+                    { path: "/store", label: t("dreamStore") },
+                    { path: "/vip", label: t("vipMember"), icon: Crown },
+                    { path: "/how-it-works", label: t("howItWorks") },
+                    { path: "/prizes", label: t("prizes") },
+                    { path: "/faq", label: t("faq") },
+                    { path: "/winners", label: t("winners") },
+                  ].map((link) => (
+                    <Link 
+                      key={link.path}
+                      to={link.path}
+                      onClick={() => setMobileOpen(false)}
+                      className={`text-lg font-black uppercase tracking-widest flex items-center gap-3 py-2 ${
+                        pathname === link.path ? "text-[#FFD700]" : "text-white"
+                      }`}
+                    >
+                      {link.icon && <link.icon size={18} className="text-[#FFD700]" />}
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2">
+                      <Globe size={12} /> {t("language")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {languages.map(l => (
+                        <button
+                          key={l.code}
+                          onClick={() => setLang(l.code)}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                            lang === l.code ? "bg-[#FFD700] text-black" : "bg-white/5 text-white/60"
+                          }`}
+                        >
+                          {l.code}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2">
+                      <Coins size={12} /> {t("currency")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {currencies.map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setCurrency(c)}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                            currency === c ? "bg-[#FFD700] text-black" : "bg-white/5 text-white/60"
+                          }`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative pt-4">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 mt-2" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder={t("search")}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
-      <div className="h-[160px]" />
+      <div className="h-[140px] lg:h-[160px]" />
     </>
   );
 }

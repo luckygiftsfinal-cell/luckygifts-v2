@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Star, Crown, Gem, ShoppingCart } from "lucide-react";
 import { useStore } from "../context/StoreContext";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 const ICON_MAP: Record<string, any> = {
   Star,
@@ -12,6 +14,9 @@ const ICON_MAP: Record<string, any> = {
 const VIPCard = ({ pkg }: { pkg: any }) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const { isAuthenticated, setModalOpen } = useAuth();
+  const { addItem, items } = useCart();
+  const isAdded = items.some(item => item.id === pkg.id);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -19,6 +24,27 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     });
+  };
+
+  const handleSelect = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      setModalOpen(true);
+      return;
+    }
+    
+    if (!isAdded) {
+      addItem({
+        id: pkg.id,
+        title: pkg.name,
+        price: pkg.price.toString(),
+        mainImage: "/images/prize_luxury.png", // Fallback for VIP
+        tickets: pkg.entries,
+        stock: "100",
+        prize: pkg.eventTicketsLabel,
+        isHot: pkg.popular
+      });
+    }
   };
 
   const Icon = ICON_MAP[pkg.iconName] || Star;
@@ -153,9 +179,22 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
           ))}
         </ul>
 
-        <button className="btn-primary" style={{ width: "100%", justifyContent: "center" }}>
-          <ShoppingCart size={20} />
-          CHOOSE {pkg.name.toUpperCase()}
+        <button 
+          onClick={handleSelect}
+          className="btn-primary" 
+          style={{ 
+            width: "100%", 
+            justifyContent: "center",
+            background: isAdded ? "linear-gradient(135deg, #22c55e, #16a34a)" : undefined,
+            color: isAdded ? "#fff" : undefined
+          }}
+        >
+          {isAdded ? "✓ IN CART" : (
+            <>
+              <ShoppingCart size={20} />
+              CHOOSE {pkg.name.toUpperCase()}
+            </>
+          )}
         </button>
       </div>
     </motion.div>

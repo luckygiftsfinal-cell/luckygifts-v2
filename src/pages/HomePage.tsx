@@ -3,8 +3,11 @@ import HowItWorks from "../sections/HowItWorks";
 import PopularProducts from "../sections/PopularProducts";
 import Testimonials from "../sections/Testimonials";
 import { Shield, Zap, Award, Star } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function HomePage() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-[#050505]">
       <HeroSection />
@@ -15,10 +18,10 @@ export default function HomePage() {
           {[1, 2, 3, 4].map((group) => (
             <div key={group} className="flex items-center gap-16 px-8">
               {[
-                { icon: Shield, label: "SSL Secured Payments" },
-                { icon: Award, label: "12,400+ Verified Winners" },
-                { icon: Zap, label: "Instant Entry System" },
-                { icon: Star, label: "4.9/5 Trust Score" },
+                { icon: Shield, label: t("securePayments") },
+                { icon: Award, label: t("verifiedWinnersCount") },
+                { icon: Zap, label: t("instantEntry") },
+                { icon: Star, label: t("trustScoreLabel") },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <item.icon size={16} className="text-[#FFD700]" />

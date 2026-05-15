@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search, User, Crown, Mail, MoreVertical, Edit2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
+import { isValidPhone } from "../../lib/validation";
 
 const mockUsers = [
   { id: "1", name: "Ahmed Al-Maktoum", email: "ahmed@example.com", phone: "+971 50 123 4567", vip: "Diamond", joined: "12 Mar 2026", status: "Active" },
@@ -45,6 +46,14 @@ export default function AdminUsers() {
 
   const handleUpdateUser = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isValidPhone(editingUser.phone)) {
+      toast.error("Invalid phone number", {
+        description: "Please enter a valid phone number (7-15 digits)."
+      });
+      return;
+    }
+
     setUsers(prev => prev.map(u => u.id === editingUser.id ? editingUser : u));
     toast.success("User updated successfully!");
     setEditingUser(null);

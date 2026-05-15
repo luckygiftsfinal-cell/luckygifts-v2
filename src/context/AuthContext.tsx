@@ -62,57 +62,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    // Check active sessions and sets the user
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
+  const syncProfile = async (session: any) => {
+    try {
+      if (!session) {
+        setUser(null);
+        return;
+      }
+      
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      console.log("Syncing profile for session:", session?.user?.id);
+      if (profile) {
+        console.log("Profile found:", profile.full_name);
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name: profile.full_name,
+          phone: profile.phone,
+          role: profile.role,
+          vipLevel: profile.vip_level,
+          ticketBalance: profile.ticket_balance || 0
+        });
+        setEarnedTickets(profile.ticket_balance || 0);
+      } else if (error || !profile) {
+        console.log("Profile not found or error, attempting to create...", error);
+        // If profile missing, attempt to create it from metadata
+        const role = session.user.email?.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
+        const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
+          .insert([
+            {
+              id: session.user.id,
+              full_name: session.user.user_metadata?.full_name || "New User",
+              phone: session.user.user_metadata?.phone || "",
+              role: role,
+              vip_level: "None"
+            }
+          ])
+          .select()
           .single();
         
-        if (profile) {
+        if (!insertError && newProfile) {
           setUser({
             id: session.user.id,
             email: session.user.email!,
-            name: profile.full_name,
-            phone: profile.phone,
-            role: profile.role,
-            vipLevel: profile.vip_level,
-            ticketBalance: profile.ticket_balance || 0
+            name: newProfile.full_name,
+            phone: newProfile.phone,
+            role: newProfile.role,
+            vipLevel: newProfile.vip_level,
+            ticketBalance: newProfile.ticket_balance || 0
           });
-          setEarnedTickets(profile.ticket_balance || 0);
+          setEarnedTickets(newProfile.ticket_balance || 0);
         }
       }
-      setIsLoading(false);
+    } catch (err) {
+      console.error("Error in syncProfile:", err);
+    }
+  };
+
+  useEffect(() => {
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await syncProfile(session);
+        }
+      } catch (err) {
+        console.error("Error getting session:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: profile.full_name,
-            phone: profile.phone,
-            role: profile.role,
-            vipLevel: profile.vip_level,
-            ticketBalance: profile.ticket_balance || 0
-          });
-          setEarnedTickets(profile.ticket_balance || 0);
-        }
-      } else {
-        setUser(null);
+      try {
+        await syncProfile(session);
+      } finally {
+        setIsLoading(false);
       }
     });
 
@@ -120,21 +152,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password?: string) => {
+    console.log("Attempting login for:", email);
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: password || "",
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: password || "",
+      });
 
-    if (error) {
-      toast.error(error.message);
+      console.log("Login result:", { user: data.user, error });
+
+      if (error) {
+        toast.error(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      setModalOpen(false);
+      toast.success(`Welcome back!`);
+    } catch (err) {
+      console.error("Login exception:", err);
+      toast.error("A critical error occurred during login");
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    setModalOpen(false);
-    toast.success(`Welcome back!`);
-    setIsLoading(false);
   };
 
   const register = async (name: string, email: string, phone: string, password?: string) => {
@@ -143,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password: password || "",
       options: {
+        emailRedirectTo: window.location.origin,
         data: {
           full_name: name,
           phone: phone
@@ -176,7 +218,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setModalOpen(false);
-    toast.success(`Account created successfully!`);
+    if (data.user && !data.session) {
+      toast.success(`Account created! Please check your email to confirm.`);
+    } else {
+      toast.success(`Account created successfully!`);
+    }
     setIsLoading(false);
   };
 

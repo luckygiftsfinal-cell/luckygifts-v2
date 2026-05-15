@@ -54,12 +54,18 @@ function Countdown({ targetDate }: { targetDate: Date }) {
   );
 }
 
-function ProductCard({ p, formatPrice, t, lang, addItem, items }: any) {
+function ProductCard({ p, formatPrice, t, lang, addItem, items, isAuthenticated, setModalOpen }: any) {
   const [hovered, setHovered] = useState(false);
   const isAdded = items.some((item: any) => item.id === p.id);
 
   const handleCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      setModalOpen(true);
+      return;
+    }
+
     if (!isAdded) {
       addItem(p);
     }
@@ -90,7 +96,7 @@ function ProductCard({ p, formatPrice, t, lang, addItem, items }: any) {
           borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase",
           boxShadow: "0 4px 15px rgba(255,80,0,0.4)",
           display: "flex", alignItems: "center", gap: 4
-        }}>🏆 TOP SELL</div>
+        }}>🏆 {t("topSell")}</div>
       )}
 
       <div style={{
@@ -102,7 +108,7 @@ function ProductCard({ p, formatPrice, t, lang, addItem, items }: any) {
         transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
       }}>
         <div style={{ fontSize: 22 }}>{p.tickets}</div>
-        <div style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>TICKETS</div>
+        <div style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{t("tickets")}</div>
       </div>
 
       <div style={{ position: "relative", height: 220, overflow: "hidden" }}>
@@ -135,7 +141,7 @@ function ProductCard({ p, formatPrice, t, lang, addItem, items }: any) {
           </div>
           {p.old_price > 0 && (
             <div style={{ background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.3)", color: "#FFD700", fontSize: 11, fontWeight: 900, padding: "5px 10px", borderRadius: 8, textTransform: "uppercase" }}>
-              SAVE {Math.round((1 - p.price / p.old_price) * 100)}%
+              {lang === 'AR' ? 'وفر' : 'SAVE'} {Math.round((1 - p.price / p.old_price) * 100)}%
             </div>
           )}
         </div>
@@ -143,10 +149,10 @@ function ProductCard({ p, formatPrice, t, lang, addItem, items }: any) {
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 11, fontWeight: 700 }}>
             <span style={{ color: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 14 }}>🔥</span> {lang === 'AR' ? 'مؤشر الحلم' : 'Dream Indicator'}
+              <span style={{ fontSize: 14 }}>🔥</span> {t("dreamIndicator")}
             </span>
             <span style={{ color: p.stock < 10 || ((p.total_stock - p.stock) / p.total_stock) >= 0.8 ? "#ef4444" : "#4ade80" }}>
-              {Math.round(((p.total_stock - p.stock) / p.total_stock) * 100)}% {lang === 'AR' ? "مُباع" : "Sold"}
+              {Math.round(((p.total_stock - p.stock) / p.total_stock) * 100)}% {t("sold")}
             </span>
           </div>
           <div style={{ width: "100%", height: 8, background: "rgba(255,255,255,0.05)", borderRadius: 10, overflow: "hidden", position: "relative" }}>
@@ -178,7 +184,7 @@ function ProductCard({ p, formatPrice, t, lang, addItem, items }: any) {
             boxShadow: hovered ? `0 15px 40px rgba(255,215,0,0.25)` : "none"
           }}
         >
-          {isAdded ? <>✓ {lang === 'AR' ? 'موجود في السلة' : 'IN CART'}</> : <><ShoppingCart size={18} /> {lang === 'AR' ? 'أضف للسلة' : 'ADD TO CART'}</>}
+          {isAdded ? <>✓ {t("inCart")}</> : <><ShoppingCart size={18} /> {t("addToCart")}</>}
         </button>
       </div>
     </div>
@@ -187,12 +193,14 @@ function ProductCard({ p, formatPrice, t, lang, addItem, items }: any) {
 
 import { useStore } from "../context/StoreContext";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function DreamStorePage() {
   const { lang, t } = useLanguage();
   const { formatPrice } = useCurrency();
   const { categories, draws, products } = useStore();
   const { addItem, items } = useCart();
+  const { isAuthenticated, setModalOpen } = useAuth();
   const [activeTab, setActiveTab] = useState("Cash");
 
   const filteredProducts = products.filter(p => p.category === activeTab);
@@ -243,17 +251,17 @@ export default function DreamStorePage() {
           <div className="container" style={{ display: "flex", flexWrap: "wrap", gap: 48, alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ flex: "1 1 480px", animation: "floatUp 0.7s ease both" }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 20, opacity: 0.8 }}>
-                ✦ LUCKYGIFTS PREMIUM STORE ✦
+                ✦ {t("premiumStore")} ✦
               </div>
               <h1 style={{ fontSize: "clamp(44px, 7vw, 80px)", fontWeight: 900, lineHeight: 1.02, letterSpacing: "-0.04em", marginBottom: 20 }}>
                 <span className="text-gold italic tracking-tighter">{t("dreamStore")}</span>
               </h1>
               <p style={{ fontSize: "clamp(16px, 2vw, 20px)", color: "#FFFFFF", lineHeight: 1.7, marginBottom: 40, maxWidth: 520, fontWeight: "bold" }}>
-                {lang === 'AR' ? "رحلتك نحو الملايين تبدأ بضغطة زر واحدة." : "Your journey to millions starts with a single click. Premium gifts, life-changing prizes."}
+                {t("storeDesc")}
               </p>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <Link to="/vip" className="btn-primary" style={{ padding: "16px 36px", fontSize: 15 }}>
-                  <Crown size={18} /> {lang === 'AR' ? 'استكشف سحب VIP' : 'Explore VIP Draw'}
+                  <Crown size={18} /> {t("exploreVip")}
                 </Link>
               </div>
             </div>
@@ -265,16 +273,16 @@ export default function DreamStorePage() {
               boxShadow: "0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,215,0,0.1)",
               animation: "floatUp 0.9s ease both"
             }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>🌍 Global Stats</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>🌍 {t("globalStats")}</div>
               <div style={{ fontSize: 42, fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 4 }}>
                 <AnimatedCounter value={250000} />
               </div>
-              <div style={{ fontSize: 12, color: "#FFFFFF", marginBottom: 24, fontWeight: "bold" }}>Total Tickets Sold Worldwide</div>
+              <div style={{ fontSize: 12, color: "#FFFFFF", marginBottom: 24, fontWeight: "bold" }}>{t("totalTicketsSold")}</div>
               <div style={{ padding: "14px 16px", background: "rgba(34,197,94,0.08)", borderRadius: 14, border: "1px solid rgba(34,197,94,0.18)", marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#4ade80" }}>⚡ Your odds: 1 in 2.5!</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#4ade80" }}>⚡ {t("yourOdds")}</div>
               </div>
               <div style={{ borderTop: "1px solid rgba(255,215,0,0.12)", paddingTop: 20 }}>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "bold" }}>Next Draw In</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "bold" }}>{t("nextDrawIn")}</div>
                 <Countdown targetDate={new Date("2026-12-31T00:00:00")} />
               </div>
             </div>
@@ -311,7 +319,7 @@ export default function DreamStorePage() {
               {currentTabInfo?.name}
             </h2>
             <p style={{ color: "#FFFFFF", fontSize: 16, maxWidth: 480, margin: "0 auto", fontWeight: "bold", opacity: 0.8 }}>
-              {lang === 'AR' ? "شراء واحد. جوائز متعددة." : "One purchase. Multiple dream prizes."}
+              {t("storeFooterDesc")}
             </p>
           </div>
 
@@ -327,7 +335,7 @@ export default function DreamStorePage() {
                   <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
                     <div>
                       <div style={{ fontSize: 10, fontWeight: 800, color: "#FFD700", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10, opacity: 0.7 }}>
-                        ✦ OFFICIAL PRIZE DRAW ✦
+                        ✦ {t("officialPrizeDraw")} ✦
                       </div>
                       <h3 style={{
                         fontSize: "clamp(22px, 4vw, 40px)", fontWeight: 950, textTransform: "uppercase",
@@ -342,7 +350,16 @@ export default function DreamStorePage() {
                 <div className="dream-product-grid">
                   {products.map((p: any, pi: number) => (
                     <div key={p.id} className="dream-card-enter" style={{ animationDelay: `${pi * 0.08}s` }}>
-                      <ProductCard p={p} formatPrice={formatPrice} t={t} lang={lang} addItem={addItem} items={items} />
+                      <ProductCard 
+                        p={p} 
+                        formatPrice={formatPrice} 
+                        t={t} 
+                        lang={lang} 
+                        addItem={addItem} 
+                        items={items} 
+                        isAuthenticated={isAuthenticated}
+                        setModalOpen={setModalOpen}
+                      />
                     </div>
                   ))}
                 </div>

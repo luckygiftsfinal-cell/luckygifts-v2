@@ -102,21 +102,21 @@ export default function HeroSection() {
               <div className="flex flex-col items-center lg:items-start gap-6">
                 <div className="flex flex-nowrap justify-center lg:justify-start gap-3 w-full">
                   <Link to="/store" className="bg-gold text-black py-3 px-4 sm:py-4 sm:px-10 text-sm sm:text-lg font-black rounded-2xl flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(255,215,0,0.3)] hover:scale-105 transition-transform whitespace-nowrap flex-1 sm:flex-none">
-                    Shop Now <ArrowRight size={18} className="sm:w-5 sm:h-5" />
+                    {t("startShopping")} <ArrowRight size={18} className="sm:w-5 sm:h-5" />
                   </Link>
                   <Link to="/how-it-works" className="bg-[#111111] text-white border border-white/10 py-3 px-4 sm:py-4 sm:px-10 text-sm sm:text-lg font-black rounded-2xl hover:bg-black transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 sm:flex-none">
-                    How it Works
+                    {t("howItWorks")}
                   </Link>
                 </div>
 
                 <div className="flex flex-nowrap justify-center lg:justify-start items-center gap-4 sm:gap-6 opacity-70 w-full">
                   <div className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                     <Lock size={12} className="text-white sm:w-3.5 sm:h-3.5" />
-                    <span className="text-[8px] sm:text-[10px] font-black text-white uppercase tracking-wider">100% SECURE PAYMENT</span>
+                    <span className="text-[8px] sm:text-[10px] font-black text-white uppercase tracking-wider">{t("securePayments")}</span>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                     <Zap size={12} className="text-white sm:w-3.5 sm:h-3.5" />
-                    <span className="text-[8px] sm:text-[10px] font-black text-white uppercase tracking-wider">100% TRUSTED DRAW</span>
+                    <span className="text-[8px] sm:text-[10px] font-black text-white uppercase tracking-wider">{t("instantEntry")}</span>
                   </div>
                 </div>
               </div>
@@ -125,23 +125,23 @@ export default function HeroSection() {
               <div className="flex items-center gap-4 bg-black/60 border border-white/20 rounded-xl p-4 pr-6 backdrop-blur-md">
                 <Calendar size={28} className="text-white" />
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.1em] mb-1">BIG DRAW 31-12-2026</span>
+                  <span className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.1em] mb-1">{t("bigDraw")} 31-12-2026</span>
                   <div className="flex items-center gap-3 text-white font-black leading-none">
                     <div className="flex items-end">
                       <span className="text-2xl">{timeLeft.days}</span>
-                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">D</span>
+                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">{t("days")}</span>
                     </div>
                     <div className="flex items-end">
                       <span className="text-2xl">{String(timeLeft.hours).padStart(2, '0')}</span>
-                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">H</span>
+                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">{t("hours")}</span>
                     </div>
                     <div className="flex items-end">
                       <span className="text-2xl">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">M</span>
+                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">{t("minutes")}</span>
                     </div>
                     <div className="flex items-end">
                       <span className="text-2xl">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">S</span>
+                      <span className="text-[9px] text-white/60 ml-0.5 mb-1">{t("seconds")}</span>
                     </div>
                   </div>
                 </div>

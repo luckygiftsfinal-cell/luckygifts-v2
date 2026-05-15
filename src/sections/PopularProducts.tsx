@@ -10,19 +10,34 @@ const MOCK_POPULAR_PRODUCTS = [
   { id: 5, name: "Tech Pouch", price: 25, old_price: 0, tickets: 1, draw_name: "Tech Pack", img_src: "/images/prize_tech.png", category: "Tech", stock: 4800, total_stock: 5000, is_hot: false },
 ];
 
-function PopularProductCard({ p, formatPrice, t, lang }: any) {
+function PopularProductCard({ p, formatPrice, t, lang, addItem, items, isAuthenticated, setModalOpen }: any) {
   const [hovered, setHovered] = useState(false);
-  const [added, setAdded] = useState(false);
+  const isAdded = items.some((item: any) => item.id === p.id);
 
   const handleCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    
+    if (!isAuthenticated) {
+      setModalOpen(true);
+      return;
+    }
+
+    if (!isAdded) {
+      addItem({
+        ...p,
+        title: p.name,
+        mainImage: p.img_src,
+        price: p.price.toString(),
+        stock: p.stock.toString(),
+        prize: p.draw_name,
+        isHot: p.is_hot
+      });
+    }
   };
 
   return (
-    <Link to="/store"
+    <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -47,7 +62,7 @@ function PopularProductCard({ p, formatPrice, t, lang }: any) {
           boxShadow: "0 4px 20px rgba(255,215,0,0.4)",
           display: "flex", alignItems: "center", gap: 6
         }}>
-          <span style={{ fontSize: 12 }}>🔥</span> HOT PRODUCT
+          <span style={{ fontSize: 12 }}>🔥</span> {t("hotProduct")}
         </div>
       )}
 
@@ -60,7 +75,7 @@ function PopularProductCard({ p, formatPrice, t, lang }: any) {
         transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
       }}>
         <div style={{ fontSize: 16 }}>{p.tickets}</div>
-        <div style={{ fontSize: 6, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>TICKETS</div>
+        <div style={{ fontSize: 6, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{t("tickets")}</div>
       </div>
 
       <div style={{ position: "relative", height: 220, overflow: "hidden" }}>
@@ -93,7 +108,7 @@ function PopularProductCard({ p, formatPrice, t, lang }: any) {
           </div>
           {p.old_price > 0 && (
             <div style={{ background: "linear-gradient(to right, rgba(255,215,0,0.15), rgba(255,215,0,0.05))", border: "1px solid rgba(255,215,0,0.2)", color: "#FFD700", fontSize: 10, fontVariationSettings: '"wght" 900', padding: "6px 12px", borderRadius: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              -{Math.round((1 - p.price / p.old_price) * 100)}% OFF
+              -{Math.round((1 - p.price / p.old_price) * 100)}% {lang === 'AR' ? 'خصم' : 'OFF'}
             </div>
           )}
         </div>
@@ -101,10 +116,10 @@ function PopularProductCard({ p, formatPrice, t, lang }: any) {
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 11, fontWeight: 700 }}>
             <span style={{ color: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 14 }}>🔥</span> {lang === 'AR' ? 'مؤشر الحلم' : 'Dream Indicator'}
+              <span style={{ fontSize: 14 }}>🔥</span> {t("dreamIndicator")}
             </span>
             <span style={{ color: p.stock < 10 || ((p.total_stock - p.stock) / p.total_stock) >= 0.8 ? "#ef4444" : "#4ade80" }}>
-              {Math.round(((p.total_stock - p.stock) / p.total_stock) * 100)}% {lang === 'AR' ? "مُباع" : "Sold"}
+              {Math.round(((p.total_stock - p.stock) / p.total_stock) * 100)}% {t("sold")}
             </span>
           </div>
           <div style={{ width: "100%", height: 8, background: "rgba(255,255,255,0.05)", borderRadius: 10, overflow: "hidden", position: "relative" }}>
@@ -122,13 +137,13 @@ function PopularProductCard({ p, formatPrice, t, lang }: any) {
           onClick={handleCart}
           style={{
             width: "100%", padding: "16px 0", borderRadius: 16,
-            background: added
+            background: isAdded
               ? "linear-gradient(135deg, #22c55e, #16a34a)"
               : hovered
                 ? `linear-gradient(135deg, #FFD700, #B8960C)`
                 : `rgba(255,215,0,0.05)`,
-            border: added ? "none" : hovered ? "none" : "1px solid rgba(255,215,0,0.2)",
-            color: (added || hovered) ? "#000" : "#FFD700",
+            border: isAdded ? "none" : hovered ? "none" : "1px solid rgba(255,215,0,0.2)",
+            color: (isAdded || hovered) ? "#000" : "#FFD700",
             fontWeight: 900, fontSize: 14, cursor: "pointer", letterSpacing: "0.1em",
             textTransform: "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
             transform: hovered ? "translateY(-2px)" : "translateY(0)",
@@ -136,16 +151,21 @@ function PopularProductCard({ p, formatPrice, t, lang }: any) {
             boxShadow: hovered ? `0 15px 40px rgba(255,215,0,0.25)` : "none"
           }}
         >
-          {added ? <>✓ {lang === 'AR' ? 'تمت الإضافة' : 'Added!'}</> : <><ShoppingCart size={18} /> {lang === 'AR' ? 'أضف للسلة' : 'ADD TO CART'}</>}
+          {isAdded ? <>✓ {t("inCart")}</> : <><ShoppingCart size={18} /> {t("addToCart")}</>}
         </button>
       </div>
-    </Link>
+    </div>
   );
 }
+
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 export default function PopularProducts() {
   const { lang, t } = useLanguage();
   const { formatPrice } = useCurrency();
+  const { isAuthenticated, setModalOpen } = useAuth();
+  const { addItem, items } = useCart();
 
   return (
     <section className="py-24 relative bg-[#050505]">
@@ -156,25 +176,34 @@ export default function PopularProducts() {
       <div className="container relative z-10 px-4">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <span className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.4em] mb-4 block">Trending Now</span>
-            <h2 className="text-4xl md:text-5xl font-black text-white">Popular Products</h2>
+            <span className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.4em] mb-4 block">{t("trendingNow")}</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">{t("popularProducts")}</h2>
           </div>
           <Link to="/store" className="hidden md:flex items-center gap-2 text-[#FFD700] font-bold hover:gap-4 transition-all uppercase tracking-widest text-sm">
-            View All <ArrowRight size={18} />
+            {t("viewAll")} <ArrowRight size={18} />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {MOCK_POPULAR_PRODUCTS.map((p, i) => (
             <div key={p.id} className="animate-floatUp" style={{ animationDelay: `${i * 0.1}s`, animationFillMode: "both" }}>
-              <PopularProductCard p={p} formatPrice={formatPrice} t={t} lang={lang} />
+              <PopularProductCard 
+                p={p} 
+                formatPrice={formatPrice} 
+                t={t} 
+                lang={lang} 
+                addItem={addItem}
+                items={items}
+                isAuthenticated={isAuthenticated}
+                setModalOpen={setModalOpen}
+              />
             </div>
           ))}
         </div>
 
         <div className="mt-12 text-center md:hidden">
           <Link to="/store" className="inline-flex items-center gap-2 text-[#FFD700] font-bold hover:gap-4 transition-all uppercase tracking-widest text-sm">
-            View All <ArrowRight size={18} />
+            {t("viewAll")} <ArrowRight size={18} />
           </Link>
         </div>
       </div>

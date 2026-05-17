@@ -8,11 +8,11 @@ import { toast } from "sonner";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function AuthModal() {
-  const { isModalOpen, setModalOpen, login, register } = useAuth();
+  const { user, isAuthenticated, isModalOpen, setModalOpen, login, register } = useAuth();
   const { lang } = useLanguage();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "register">("login");
-  
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -20,10 +20,22 @@ export default function AuthModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Handle redirects and modal closing when authentication state changes
+  React.useEffect(() => {
+    if (isAuthenticated && isModalOpen) {
+      setModalOpen(false);
+      // Auto-redirect admin to dashboard
+      if (user?.role === "admin") {
+        navigate("/admin");
+      }
+    }
+  }, [isAuthenticated, isModalOpen, user?.role, navigate, setModalOpen]);
+
   if (!isModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!email || !password || (mode === "register" && (!name || !phone))) return;
 
     if (mode === "register" && !isValidPhone(phone)) {
@@ -32,23 +44,28 @@ export default function AuthModal() {
       });
       return;
     }
-    
+
+    console.log("=== SUBMIT CLICKED ===", { mode, email });
     setLoading(true);
     try {
       if (mode === "login") {
-        await login(email, password);
+        const success = await login(email, password);
+        if (success) {
+          if (email.toLowerCase() === "luckygiftsfinal@gmail.com") {
+            window.location.href = "/admin";
+          } else {
+            window.location.href = "/";
+          }
+        }
       } else {
-        await register(name, email, phone, password);
-      }
-      
-      // Auto-redirect admin to dashboard - only if login was successful
-      // The login function in context handles its own success state and closes modal
-      if (email.toLowerCase() === "luckygiftsfinal@gmail.com") {
-        setTimeout(() => navigate("/admin"), 500);
+        const success = await register(name, email, phone, password);
+        if (success) {
+          toast.info(lang === 'AR' ? "يرجى تفعيل حسابك عبر البريد الإلكتروني" : "Please check your email to verify your account");
+        }
       }
     } catch (err: any) {
-      console.error("Auth error:", err);
-      toast.error(lang === 'AR' ? "حدث خطأ ما أثناء تسجيل الدخول" : "An error occurred during authentication");
+      console.error("Auth UI error:", err);
+      toast.error(lang === 'AR' ? "خطأ في الاتصال" : "Connection error");
     } finally {
       setLoading(false);
     }
@@ -58,7 +75,7 @@ export default function AuthModal() {
     <AnimatePresence>
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         {/* Backdrop */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -67,14 +84,14 @@ export default function AuthModal() {
         />
 
         {/* Modal Container */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(255,215,0,0.1)] overflow-hidden"
         >
           {/* Close Button */}
-          <button 
+          <button
             onClick={() => setModalOpen(false)}
             className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors"
           >
@@ -83,7 +100,7 @@ export default function AuthModal() {
 
           {/* Golden Header Glow */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent opacity-50" />
-          
+
           <div className="p-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-black text-white uppercase tracking-wider mb-2">
@@ -101,25 +118,25 @@ export default function AuthModal() {
                     <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
                       <User size={18} />
                     </div>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Full Name" 
+                      placeholder="Full Name"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-white/30 focus:outline-none focus:border-[#FFD700]/50 transition-colors"
                       required
                     />
                   </div>
-                  
+
                   <div className="relative">
                     <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
                       <Phone size={18} />
                     </div>
-                    <input 
-                      type="tel" 
+                    <input
+                      type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Phone Number" 
+                      placeholder="Phone Number"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-white/30 focus:outline-none focus:border-[#FFD700]/50 transition-colors"
                       required
                     />
@@ -131,11 +148,11 @@ export default function AuthModal() {
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
                   <Mail size={18} />
                 </div>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email Address" 
+                  placeholder="Email Address"
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-white/30 focus:outline-none focus:border-[#FFD700]/50 transition-colors"
                   required
                 />
@@ -145,11 +162,11 @@ export default function AuthModal() {
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-white/40">
                   <Lock size={18} />
                 </div>
-                <input 
-                  type={showPassword ? "text" : "password"} 
+                <input
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password" 
+                  placeholder="Password"
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white placeholder-white/30 focus:outline-none focus:border-[#FFD700]/50 transition-colors"
                   required
                 />
@@ -168,8 +185,8 @@ export default function AuthModal() {
                 </div>
               )}
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="w-full mt-6 bg-[#FFD700] hover:bg-[#e6c200] text-black font-black uppercase tracking-widest py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70"
               >
@@ -184,13 +201,13 @@ export default function AuthModal() {
             <div className="mt-8 text-center border-t border-white/10 pt-6">
               <p className="text-sm text-white/40">
                 {mode === "login" ? "Don't have an account?" : "Already have an account?"}
-                <button 
+                <button
                   onClick={() => {
                     setMode(mode === "login" ? "register" : "login");
                     setName("");
                     setEmail("");
                     setPassword("");
-                  }} 
+                  }}
                   className="ml-2 text-[#FFD700] font-bold hover:text-white transition-colors"
                 >
                   {mode === "login" ? "Sign Up" : "Sign In"}

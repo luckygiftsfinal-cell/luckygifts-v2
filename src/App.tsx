@@ -50,56 +50,56 @@ export default function App() {
     <StoreProvider>
       <CartProvider>
         <AuthProvider>
-          <PayPalScriptProvider options={{ 
+          <PayPalScriptProvider options={{
             "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID || "test",
             currency: "USD",
             intent: "capture"
           }}>
-          <ScrollToTop />
-          <AuthModal />
-          <CartSidebar />
-          <Toaster position="top-right" expand={false} richColors />
-          <div className="noise-overlay" />
-          
-          {!isAdminRoute && <Navigation />}
-          
-          <main>
-            {!isAdminRoute && <PageHeaderActions />}
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/winners" element={<WinnersPage />} />
-              <Route path="/faq" element={<FAQPage />} />
-              <Route path="/prizes" element={<PrizesPage />} />
-              <Route path="/how-it-works" element={<HowItWorksPage />} />
-              <Route path="/vip" element={<VIPPage />} />
-              <Route path="/store" element={<DreamStorePage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/about" element={<AboutUsPage />} />
-              <Route path="/trust" element={<WhyTrustUsPage />} />
-              <Route path="/orders" element={<OrderHistoryPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/work-with-us" element={<WorkWithUsPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminOverview />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="dream-store" element={<AdminDreamStore />} />
-                <Route path="vip-packages" element={<AdminVIPPackages />} />
-                <Route path="settings" element={<AdminSettings />} />
-                <Route path="*" element={<div className="p-8 text-white">Admin Module Coming Soon...</div>} />
-              </Route>
+            <ScrollToTop />
+            <AuthModal />
+            <CartSidebar />
+            <Toaster position="top-right" expand={false} richColors />
+            <div className="noise-overlay" />
 
-              <Route path="*" element={<div className="min-h-screen flex items-center justify-center text-white">404 - Page Coming Soon</div>} />
-            </Routes>
-          </main>
-          
-          {!isAdminRoute && <Footer />}
+            {!isAdminRoute && <Navigation />}
+
+            <main>
+              {!isAdminRoute && <PageHeaderActions />}
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/winners" element={<WinnersPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/prizes" element={<PrizesPage />} />
+                <Route path="/how-it-works" element={<HowItWorksPage />} />
+                <Route path="/vip" element={<VIPPage />} />
+                <Route path="/store" element={<DreamStorePage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/about" element={<AboutUsPage />} />
+                <Route path="/trust" element={<WhyTrustUsPage />} />
+                <Route path="/orders" element={<OrderHistoryPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/work-with-us" element={<WorkWithUsPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminOverview />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="dream-store" element={<AdminDreamStore />} />
+                  <Route path="vip-packages" element={<AdminVIPPackages />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="*" element={<div className="p-8 text-white">Admin Module Coming Soon...</div>} />
+                </Route>
+
+                <Route path="*" element={<div className="min-h-screen flex items-center justify-center text-white">404 - Page Coming Soon</div>} />
+              </Routes>
+            </main>
+
+            {!isAdminRoute && <Footer />}
           </PayPalScriptProvider>
         </AuthProvider>
       </CartProvider>

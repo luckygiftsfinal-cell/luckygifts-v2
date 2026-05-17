@@ -164,9 +164,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const { data: orderData } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
       if (orderData) setOrders(orderData);
 
-      // Fetch User Tickets (for admin/general overview)
-      const { data: ticketData } = await supabase.from('user_tickets').select('*').order('created_at', { ascending: false });
-      if (ticketData) setTickets(ticketData);
+      // user_tickets fetched separately when needed
 
       // Fetch Promo Codes
       const { data: promoData } = await supabase.from('promo_codes').select('*');
@@ -279,10 +277,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .eq('code', code.toUpperCase())
       .eq('is_active', true)
       .single();
-    
+
     if (error || !data) return null;
     if (data.current_uses >= data.max_uses) return null;
-    
+
     return data as PromoCode;
   };
 
@@ -301,7 +299,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <StoreContext.Provider value={{ 
+    <StoreContext.Provider value={{
       categories, draws, products, orders, tickets, promoCodes, vipPackages, loading,
       addCategory, updateCategory, deleteCategory,
       addProduct, updateProduct, deleteProduct,

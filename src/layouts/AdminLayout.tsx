@@ -43,19 +43,18 @@ export default function AdminLayout() {
             <span className="ml-2 text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded uppercase tracking-widest">Admin</span>
           </Link>
         </div>
-        
+
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.path;
             return (
-              <Link 
-                key={item.path} 
+              <Link
+                key={item.path}
                 to={item.path}
-                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold ${
-                  isActive 
-                    ? "bg-[#FFD700]/10 text-[#FFD700] shadow-[inset_4px_0_0_#FFD700]" 
+                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold ${isActive
+                    ? "bg-[#FFD700]/10 text-[#FFD700] shadow-[inset_4px_0_0_#FFD700]"
                     : "text-white/60 hover:bg-white/5 hover:text-white"
-                }`}
+                  }`}
               >
                 {item.icon}
                 {item.name}
@@ -65,7 +64,7 @@ export default function AdminLayout() {
         </nav>
 
         <div className="p-4 border-t border-white/10">
-          <button 
+          <button
             onClick={() => {
               logout();
               navigate("/");
@@ -88,14 +87,14 @@ export default function AdminLayout() {
           <div className="flex items-center gap-4 flex-1">
             <div className="relative w-full max-w-md hidden lg:block">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search orders, users, products..." 
+              <input
+                type="text"
+                placeholder="Search orders, users, products..."
                 className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-12 pr-4 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#FFD700]/50 transition-colors"
               />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6">
             <button className="relative text-white/60 hover:text-white transition-colors">
               <Bell size={20} />
@@ -108,7 +107,7 @@ export default function AdminLayout() {
                 <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Super Admin</p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-br from-[#FFD700] to-[#B8860B] rounded-full flex items-center justify-center text-black font-black shadow-[0_0_15px_rgba(255,215,0,0.3)]">
-                {user?.name.charAt(0).toUpperCase()}
+                {user?.name?.charAt(0).toUpperCase() || "A"}
               </div>
             </div>
           </div>

@@ -179,9 +179,13 @@ export default function AdminOrders() {
                 </div>
               </div>
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Shipping Address</h4>
-                <div className="text-sm text-white/40">
-                  <p>{selectedOrder.address}</p>
+                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Payment Info</h4>
+                <div className="text-sm">
+                  <p className="text-white font-bold uppercase">{selectedOrder.payment_method}</p>
+                  {selectedOrder.transaction_id && (
+                    <p className="text-white/40 font-mono text-[10px] break-all mt-1">TXID: {selectedOrder.transaction_id}</p>
+                  )}
+                  <p className="text-white/40 mt-1">{selectedOrder.address}</p>
                 </div>
               </div>
             </div>

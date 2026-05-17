@@ -42,7 +42,7 @@ export default function CheckoutPage() {
 
   const handleLemonSqueezyCheckout = async () => {
     setIsProcessing(true);
-    
+
     try {
       const response = await fetch("/.netlify/functions/create-checkout", {
         method: "POST",
@@ -100,7 +100,7 @@ export default function CheckoutPage() {
 
   const handleCheckout = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.name || !formData.email || !formData.address || !formData.phone) {
       toast.error(lang === 'AR' ? "يرجى إكمال جميع البيانات المطلوبة" : "Please complete all required fields", {
@@ -117,7 +117,7 @@ export default function CheckoutPage() {
     }
 
     setIsProcessing(true);
-    
+
     if (paymentMethod === 'card') {
       handleLemonSqueezyCheckout();
     } else if (paymentMethod === 'paypal') {
@@ -153,7 +153,7 @@ export default function CheckoutPage() {
 
       if (user?.id && orderId) {
         const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
-        
+
         await sendOrderConfirmationEmail({
           toEmail: formData.email,
           userName: formData.name,
@@ -163,7 +163,7 @@ export default function CheckoutPage() {
           tickets: ticketCodes
         });
       }
-      
+
       await addTickets(totalTickets);
       setIsProcessing(false);
       toast.success(lang === 'AR' ? "تم إرسال طلب الدفع. بانتظار التأكيد." : "Payment submitted. Waiting for verification.");
@@ -208,7 +208,7 @@ export default function CheckoutPage() {
         <div className="grid lg:grid-cols-12 gap-12">
           {/* Main Form */}
           <div className="lg:col-span-7 space-y-8">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl"
@@ -225,12 +225,12 @@ export default function CheckoutPage() {
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("fullName")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="John Doe" 
+                    <input
+                      type="text"
+                      placeholder="John Doe"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors" 
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                 </div>
@@ -238,12 +238,12 @@ export default function CheckoutPage() {
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("emailAddress")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input 
-                      type="email" 
-                      placeholder="john@example.com" 
+                    <input
+                      type="email"
+                      placeholder="john@example.com"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors" 
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                 </div>
@@ -251,12 +251,12 @@ export default function CheckoutPage() {
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("shippingAddress")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="123 Luxury Ave, Dubai, UAE" 
+                    <input
+                      type="text"
+                      placeholder="123 Luxury Ave, Dubai, UAE"
                       value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors" 
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                 </div>
@@ -264,19 +264,19 @@ export default function CheckoutPage() {
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("phoneNumber")} <span className="text-[#FFD700]">*</span></label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="+971 50 000 0000" 
+                    <input
+                      type="text"
+                      placeholder="+971 50 000 0000"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors" 
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                 </div>
               </form>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -299,11 +299,10 @@ export default function CheckoutPage() {
                     key={method.id}
                     type="button"
                     onClick={() => setPaymentMethod(method.id)}
-                    className={`flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all text-center ${
-                      paymentMethod === method.id 
-                        ? "bg-[#FFD700]/10 border-[#FFD700] text-[#FFD700]" 
+                    className={`flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all text-center ${paymentMethod === method.id
+                        ? "bg-[#FFD700]/10 border-[#FFD700] text-[#FFD700]"
                         : "bg-white/5 border-white/10 text-white/40 hover:text-white hover:border-white/20"
-                    }`}
+                      }`}
                   >
                     {method.icon}
                     <span className="text-[10px] font-black uppercase tracking-widest block">{method.name}</span>
@@ -317,8 +316,8 @@ export default function CheckoutPage() {
                   <div className="space-y-1">
                     <p className="text-xs text-white/80 font-bold uppercase tracking-wide">{t("secureTransaction")}</p>
                     <p className="text-[10px] text-white/40 font-medium leading-relaxed">
-                      {lang === 'AR' 
-                        ? "سيتم إتمام عملية الدفع بشكل آمن. نحن لا نقوم بتخزين بيانات بطاقتك الائتمانية." 
+                      {lang === 'AR'
+                        ? "سيتم إتمام عملية الدفع بشكل آمن. نحن لا نقوم بتخزين بيانات بطاقتك الائتمانية."
                         : "Payment will be processed securely. We do not store your credit card"}
                     </p>
                   </div>
@@ -338,15 +337,15 @@ export default function CheckoutPage() {
           {/* Sidebar Summary */}
           <div className="lg:col-span-5">
             <div className="sticky top-32 space-y-6">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD700]/5 blur-3xl rounded-full" />
-                
+
                 <h3 className="text-xl font-black text-white uppercase tracking-tight mb-8">{t("orderSummary")}</h3>
-                
+
                 <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar mb-8">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-4">
@@ -388,14 +387,14 @@ export default function CheckoutPage() {
                 {/* Promo Code Input */}
                 <div className="mt-6">
                   <div className="flex gap-2">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder={t("promoCode")}
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value)}
                       className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#FFD700]/50 transition-all placeholder:text-white/20 uppercase font-black tracking-widest"
                     />
-                    <button 
+                    <button
                       onClick={handleApplyPromo}
                       className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
                     >
@@ -415,7 +414,7 @@ export default function CheckoutPage() {
                     </p>
                   </div>
 
-                  <button 
+                  <button
                     onClick={handleCheckout}
                     disabled={isProcessing}
                     className="w-full py-5 bg-[#FFD700] text-black font-black uppercase tracking-widest text-sm rounded-2xl flex items-center justify-center gap-3 hover:bg-[#f0d060] transition-all group disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_20px_50px_rgba(255,215,0,0.15)]"
@@ -438,57 +437,57 @@ export default function CheckoutPage() {
             </div>
           </div>
         </div>
-      <PayPalModal 
-        isOpen={isPayPalOpen} 
-        onClose={() => setIsPayPalOpen(false)} 
-        amount={formatPrice(totalPrice)}
-        onSuccess={async () => {
-          setIsPayPalOpen(false);
-          toast.success(lang === 'AR' ? "تم الدفع بنجاح!" : "Payment successful!");
-          try {
-            const orderId = await addOrder({
-              user_id: user?.id,
-              full_name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              address: formData.address,
-              total_amount: finalTotal,
-              discount_amount: calculateDiscount(),
-              payment_method: 'paypal',
-              status: 'paid',
-              items: items,
-              tickets_earned: totalTickets,
-              referrer_id: localStorage.getItem('luckygifts_ref') || undefined
-            } as any);
-
-            if (user?.id && orderId) {
-              const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
-
-              // Send Email
-              await sendOrderConfirmationEmail({
-                toEmail: formData.email,
-                userName: formData.name,
-                orderId: orderId,
-                totalAmount: totalPrice.toString(),
+        <PayPalModal
+          isOpen={isPayPalOpen}
+          onClose={() => setIsPayPalOpen(false)}
+          amount={formatPrice(totalPrice)}
+          onSuccess={async () => {
+            setIsPayPalOpen(false);
+            toast.success(lang === 'AR' ? "تم الدفع بنجاح!" : "Payment successful!");
+            try {
+              const orderId = await addOrder({
+                user_id: user?.id,
+                full_name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address,
+                total_amount: finalTotal,
+                discount_amount: calculateDiscount(),
+                payment_method: 'paypal',
+                status: 'paid',
                 items: items,
-                tickets: ticketCodes
-              });
-            }
+                tickets_earned: totalTickets,
+                referrer_id: localStorage.getItem('luckygifts_ref') || undefined
+              } as any);
 
-            await addTickets(totalTickets);
-            clearCart();
-            navigate("/");
-          } catch (err) {
-            toast.error("Failed to save order to database");
-          }
-        }}
-      />
-      <CryptoModal
-        isOpen={isCryptoOpen}
-        onClose={() => setIsCryptoOpen(false)}
-        onSuccess={handleCryptoSuccess}
-        amount={formatPrice(totalPrice)}
-      />
+              if (user?.id && orderId) {
+                const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
+
+                // Send Email
+                await sendOrderConfirmationEmail({
+                  toEmail: formData.email,
+                  userName: formData.name,
+                  orderId: orderId,
+                  totalAmount: totalPrice.toString(),
+                  items: items,
+                  tickets: ticketCodes
+                });
+              }
+
+              await addTickets(totalTickets);
+              clearCart();
+              navigate("/");
+            } catch (err) {
+              toast.error("Failed to save order to database");
+            }
+          }}
+        />
+        <CryptoModal
+          isOpen={isCryptoOpen}
+          onClose={() => setIsCryptoOpen(false)}
+          onSuccess={handleCryptoSuccess}
+          amount={formatPrice(totalPrice)}
+        />
       </div>
     </div>
   );

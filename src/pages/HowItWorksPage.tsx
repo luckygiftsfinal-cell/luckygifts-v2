@@ -41,18 +41,18 @@ export default function HowItWorksPage() {
 
   return (
     <div style={{ 
-      <SEO
-        title="How It Works — Buy, Enter and Win"
-        description="Learn how LuckyGifts works. Buy any product, get automatic entry tickets, and win life-changing luxury prizes."
-        url="/how-it-works"
-        keywords="how to win prizes UAE, lucky draw explained, prize draw rules Dubai"
-      />
       minHeight: "100vh", 
       background: "url('/images/hero-bg.png') center/cover no-repeat fixed",
       position: "relative",
       overflow: "hidden",
       fontFamily: "'Outfit', sans-serif"
     }}>
+      <SEO
+        title="How It Works — Buy, Enter and Win"
+        description="Learn how LuckyGifts works. Buy any product, get automatic entry tickets, and win life-changing luxury prizes."
+        url="/how-it-works"
+        keywords="how to win prizes UAE, lucky draw explained, prize draw rules Dubai"
+      />
       {/* Dark Overlay for depth and text legibility */}
       <div style={{ 
         position: "absolute", 

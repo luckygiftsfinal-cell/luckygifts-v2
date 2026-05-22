@@ -208,12 +208,6 @@ export default function VIPPage() {
 
   return (
     <div style={{ 
-      <SEO
-        title="VIP Membership — Exclusive Benefits & More Tickets"
-        description="Join LuckyGifts VIP and unlock exclusive benefits: bonus tickets, priority draws, special discounts and more."
-        url="/vip"
-        keywords="VIP membership UAE, luxury club Dubai, win more prizes, VIP draw"
-      />
       backgroundImage: "linear-gradient(to bottom, rgba(5,5,5,0.4), rgba(5,5,5,0.8)), url('/images/hero-bg.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
@@ -223,6 +217,12 @@ export default function VIPPage() {
       position: "relative",
       fontFamily: "'Outfit', sans-serif"
     }}>
+      <SEO
+        title="VIP Membership — Exclusive Benefits & More Tickets"
+        description="Join LuckyGifts VIP and unlock exclusive benefits: bonus tickets, priority draws, special discounts and more."
+        url="/vip"
+        keywords="VIP membership UAE, luxury club Dubai, win more prizes, VIP draw"
+      />
       <section className="relative w-full py-32 bg-transparent overflow-hidden">
         <div className="absolute inset-0 z-[1]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.06)_0%,transparent_50%)]" />

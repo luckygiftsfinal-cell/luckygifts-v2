@@ -72,16 +72,16 @@ export default function PrizesPage() {
 
   return (
     <div style={{ 
+      minHeight: "100vh", 
+      background: "url('/images/hero-bg.png') center/cover no-repeat fixed",
+      position: "relative"
+    }}>
       <SEO
         title="Current Prizes — Win Rolex, Cars, Cash and More"
         description="View all current prizes at LuckyGifts. From $1M cash to luxury watches, cars, and tech gadgets. Enter now."
         url="/prizes"
         keywords="win Rolex UAE, win Range Rover Dubai, cash prizes online, luxury prize draw"
       />
-      minHeight: "100vh", 
-      background: "url('/images/hero-bg.png') center/cover no-repeat fixed",
-      position: "relative"
-    }}>
       {/* Dark overlay for contrast */}
       <div style={{ position: "absolute", inset: 0, background: "rgba(5,5,5,0.85)", zIndex: 0 }} />
 

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, Star, Crown, Gem, ShoppingCart } from "lucide-react";
+import { Check, Star, Crown, Gem, Zap } from "lucide-react";
 import { useStore } from "../context/StoreContext";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import SEO from "../components/SEO";
 
 const ICON_MAP: Record<string, any> = {
   Star,
@@ -14,9 +16,15 @@ const ICON_MAP: Record<string, any> = {
 const VIPCard = ({ pkg }: { pkg: any }) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
   const { isAuthenticated, setModalOpen } = useAuth();
   const { addItem, items } = useCart();
   const isAdded = items.some(item => item.id === pkg.id);
+
+  const entriesCount = pkg.features?.find((f: string) => f.includes('entries'))?.match(/\d+/)?.[0] || '0';
+  const eventTicketsLabel = pkg.features?.find((f: string) => 
+    f.toLowerCase().includes('event') || f.toLowerCase().includes('dubai')
+  ) || 'VIP Event Access';
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -32,22 +40,22 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
       setModalOpen(true);
       return;
     }
-    
     if (!isAdded) {
       addItem({
         id: pkg.id,
         title: pkg.name,
         price: pkg.price.toString(),
-        mainImage: "/images/prize_luxury.png", // Fallback for VIP
-        tickets: pkg.entries,
+        mainImage: "/images/prize_luxury.png",
+        tickets: entriesCount,
         stock: "100",
-        prize: pkg.eventTicketsLabel,
+        prize: eventTicketsLabel,
         isHot: pkg.popular
       });
     }
+    setTimeout(() => navigate("/checkout"), 300);
   };
 
-  const Icon = ICON_MAP[pkg.iconName] || Star;
+  const Icon = ICON_MAP[pkg.icon] || Star;
 
   return (
     <motion.div
@@ -67,7 +75,7 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
         border: isHovered || pkg.popular 
           ? "2px solid #FFD700" 
           : "1px solid rgba(255,255,255,0.05)",
-        transform: isHovered ? (pkg.popular ? "scale(1.08) translateY(-10px)" : "scale(1.05) translateY(-10px)") : (pkg.popular ? "scale(1.05)" : "scale(1)"),
+        transform: isHovered ? "translateY(-8px)" : (pkg.popular ? "translateY(-4px)" : "translateY(0)"),
         zIndex: isHovered ? 10 : (pkg.popular ? 2 : 1),
         display: "flex",
         flexDirection: "column",
@@ -146,7 +154,7 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
 
         <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 16 }}>
           <span style={{ fontSize: 48, fontWeight: 900, color: "#FFD700" }}>${pkg.price}</span>
-          <span style={{ fontSize: 16, color: "#FFFFFF", fontWeight: 600 }}>/one-time</span>
+          <span style={{ fontSize: 16, color: "#FFFFFF", fontWeight: 600 }}>/{pkg.period || 'one-time'}</span>
         </div>
 
         <div style={{
@@ -158,12 +166,12 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
           alignItems: "center",
           justifyContent: "space-between"
         }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{pkg.entries} TICKETS</div>
-          <div style={{ fontSize: 10, fontWeight: 800, color: "#FFD700" }}>+ {pkg.eventTicketsLabel}</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{entriesCount} TICKETS</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: "#FFD700" }}>+ {eventTicketsLabel}</div>
         </div>
 
         <ul style={{ listStyle: "none", padding: 0, margin: "0 0 40px 0", flex: 1 }}>
-          {pkg.features.map((feature: string, index: number) => (
+          {(pkg.features || []).map((feature: string, index: number) => (
             <li key={index} style={{
               display: "flex",
               alignItems: "center",
@@ -185,16 +193,10 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
           style={{ 
             width: "100%", 
             justifyContent: "center",
-            background: isAdded ? "linear-gradient(135deg, #22c55e, #16a34a)" : undefined,
-            color: isAdded ? "#fff" : undefined
           }}
         >
-          {isAdded ? "✓ IN CART" : (
-            <>
-              <ShoppingCart size={20} />
-              CHOOSE {pkg.name.toUpperCase()}
-            </>
-          )}
+          <Zap size={20} />
+          BUY NOW
         </button>
       </div>
     </motion.div>
@@ -206,6 +208,12 @@ export default function VIPPage() {
 
   return (
     <div style={{ 
+      <SEO
+        title="VIP Membership — Exclusive Benefits & More Tickets"
+        description="Join LuckyGifts VIP and unlock exclusive benefits: bonus tickets, priority draws, special discounts and more."
+        url="/vip"
+        keywords="VIP membership UAE, luxury club Dubai, win more prizes, VIP draw"
+      />
       backgroundImage: "linear-gradient(to bottom, rgba(5,5,5,0.4), rgba(5,5,5,0.8)), url('/images/hero-bg.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
@@ -220,30 +228,36 @@ export default function VIPPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.06)_0%,transparent_50%)]" />
         </div>
 
-        <div className="relative z-10 container">
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto mt-16">
+        {/* CENTERED CONTENT */}
+        <div className="relative z-10 container flex flex-col items-center">
+
+          {/* VIP Cards — CENTERED */}
+          <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 lg:gap-8 max-w-5xl mt-16 w-full px-4">
             {vipPackages.map((pkg) => (
-              <VIPCard key={pkg.id} pkg={pkg} />
+              <div key={pkg.id} className="flex-1 min-w-0 md:max-w-sm">
+                <VIPCard pkg={pkg} />
+              </div>
             ))}
           </div>
 
+          {/* VIP Description — CENTERED */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mt-20 mb-10"
+            className="text-center mt-20 mb-10 flex flex-col items-center"
           >
             <span className="text-[#FFD700] font-black text-xs uppercase tracking-widest mb-4 block">VIP MEMBER PRIVILEGE</span>
-            <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter" style={{ marginBottom: 20 }}>
+            <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter mb-5">
               The VIP Member Experience
             </h2>
-            <p className="text-white/60 mt-4 max-w-3xl mx-auto" style={{ fontSize: 18, lineHeight: 1.6, fontWeight: "bold" }}>
-              Elevate your chances and unlock access to high-stakes draws. As a VIP member, you’ll enjoy exclusive luxury experiences, premium access, and VIP tickets to join us for the ultimate New Year’s Eve event in Dubai on 31.12.2026. Step into a night of elegance, celebration, and unforgettable moments.
+            <p className="text-white/60 max-w-3xl text-center" style={{ fontSize: 18, lineHeight: 1.6, fontWeight: "bold" }}>
+              Elevate your chances and unlock access to high-stakes draws. As a VIP member, you'll enjoy exclusive luxury experiences, premium access, and VIP tickets to join us for the ultimate New Year's Eve event in Dubai on 31.12.2026. Step into a night of elegance, celebration, and unforgettable moments.
             </p>
           </motion.div>
         </div>
       </section>
-      
+
       {/* Luxury Footer Note */}
       <div style={{ padding: "60px 24px", textAlign: "center", background: "linear-gradient(to top, rgba(255,215,0,0.05), transparent)" }}>
         <p style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "bold" }}>

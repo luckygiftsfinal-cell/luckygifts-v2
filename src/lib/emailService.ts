@@ -1,48 +1,71 @@
 
-import { getLuxuryEmailTemplate } from './emailTemplates';
+import { getLuxuryEmailTemplate, getAdminNotificationTemplate, getTicketEmailTemplate } from './emailTemplates';
 
 const RESEND_API_KEY = (import.meta as any).env?.VITE_RESEND_API_KEY || '';
+const ADMIN_EMAIL = 'luckygiftsfinal@gmail.com';
+const FROM_EMAIL = 'LuckyGifts <onboarding@resend.dev>';
 
-export const sendOrderConfirmationEmail = async (data: {
-  toEmail: string,
-  userName: string,
-  orderId: string,
-  totalAmount: string,
-  items: any[],
-  tickets: string[]
-}) => {
+// Send email via Resend
+const sendEmail = async (to: string, subject: string, html: string) => {
   if (!RESEND_API_KEY) {
-    console.warn("Email simulation: VITE_RESEND_API_KEY is not set. Printing email content to console instead.");
-    console.log("--- EMAIL SIMULATION START ---");
-    console.log(`To: ${data.toEmail}`);
-    console.log(`Subject: Your LuckyGifts Order #${data.orderId.substring(0, 8)}`);
-    console.log("--- EMAIL SIMULATION END ---");
+    console.warn("Email simulation - RESEND_API_KEY not set");
+    console.log(`To: ${to} | Subject: ${subject}`);
     return { success: true, simulated: true };
   }
-
   try {
-    const htmlContent = getLuxuryEmailTemplate(data);
-    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${RESEND_API_KEY}`
       },
-      body: JSON.stringify({
-        from: 'LuckyGifts <onboarding@resend.dev>', // You can change this once you verify your domain
-        to: data.toEmail,
-        subject: `Your LuckyGifts Order #${data.orderId.substring(0, 8)} - Entry Confirmed!`,
-        html: htmlContent
-      })
+      body: JSON.stringify({ from: FROM_EMAIL, to, subject, html })
     });
-
     const result = await response.json();
     return { success: response.ok, ...result };
   } catch (error) {
-    console.error("Error sending email via Resend:", error);
+    console.error("Email error:", error);
     return { success: false, error };
   }
+};
+
+// 1. Order Confirmation + Tickets to Customer
+export const sendOrderConfirmationEmail = async (data: {
+  toEmail: string,
+  userName: string,
+  orderId: string,
+  totalAmount: string,
+  items: any[],
+  tickets: string[],
+  paymentMethod?: string
+}) => {
+  // Email 1: Order confirmation with tickets to customer
+  const customerHtml = getLuxuryEmailTemplate(data);
+  await sendEmail(
+    data.toEmail,
+    `🎫 Your LuckyGifts Tickets #${data.orderId.substring(0, 8)} - Entry Confirmed!`,
+    customerHtml
+  );
+
+  // Email 2: Ticket details email to customer (separate email)
+  if (data.tickets && data.tickets.length > 0) {
+    const ticketHtml = getTicketEmailTemplate(data);
+    await sendEmail(
+      data.toEmail,
+      `🏆 Your Lucky Ticket Numbers - LuckyGifts #${data.orderId.substring(0, 8)}`,
+      ticketHtml
+    );
+  }
+
+  // Email 3: Admin notification
+  const adminHtml = getAdminNotificationTemplate(data);
+  await sendEmail(
+    ADMIN_EMAIL,
+    `🛒 New Order: $${data.totalAmount} from ${data.userName} | #${data.orderId.substring(0, 8)}`,
+    adminHtml
+  );
+
+  return { success: true };
 };
 
 export const sendWorkWithUsEmail = async (data: {
@@ -52,53 +75,20 @@ export const sendWorkWithUsEmail = async (data: {
   position: string,
   message: string
 }) => {
-  const targetEmail = "luckygifts2026@gmail.com";
-
-  if (!RESEND_API_KEY) {
-    console.warn("Email simulation: VITE_RESEND_API_KEY is not set.");
-    console.log("--- WORK WITH US EMAIL SIMULATION ---");
-    console.log(`To: ${targetEmail}`);
-    console.log(`From: ${data.name} (${data.email})`);
-    console.log(`Phone: ${data.phone}`);
-    console.log(`Position: ${data.position}`);
-    console.log(`Message: ${data.message}`);
-    console.log("--- END SIMULATION ---");
-    return { success: true, simulated: true };
-  }
-
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`
-      },
-      body: JSON.stringify({
-        from: 'LuckyGifts Careers <onboarding@resend.dev>',
-        to: targetEmail,
-        subject: `New Career Application: ${data.position} from ${data.name}`,
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #000;">New Career Application</h2>
-            <p><strong>Name:</strong> ${data.name}</p>
-            <p><strong>Email:</strong> ${data.email}</p>
-            <p><strong>Phone:</strong> ${data.phone}</p>
-            <p><strong>Desired Position/Role:</strong> ${data.position}</p>
-            <p><strong>Message:</strong></p>
-            <div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
-              ${data.message.replace(/\n/g, '<br>')}
-            </div>
-          </div>
-        `
-      })
-    });
-
-    const result = await response.json();
-    return { success: response.ok, ...result };
-  } catch (error) {
-    console.error("Error sending career application:", error);
-    return { success: false, error };
-  }
+  const html = `
+    <div style="font-family: sans-serif; padding: 20px; color: #333;">
+      <h2 style="color: #000;">New Career Application</h2>
+      <p><strong>Name:</strong> ${data.name}</p>
+      <p><strong>Email:</strong> ${data.email}</p>
+      <p><strong>Phone:</strong> ${data.phone}</p>
+      <p><strong>Position:</strong> ${data.position}</p>
+      <p><strong>Message:</strong></p>
+      <div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
+        ${data.message.replace(/\n/g, '<br>')}
+      </div>
+    </div>
+  `;
+  return sendEmail(ADMIN_EMAIL, `New Career Application: ${data.position} from ${data.name}`, html);
 };
 
 export const sendContactEmail = async (data: {
@@ -108,51 +98,18 @@ export const sendContactEmail = async (data: {
   subject: string,
   message: string
 }) => {
-  const targetEmail = "luckygifts2026@gmail.com";
-
-  if (!RESEND_API_KEY) {
-    console.warn("Email simulation: VITE_RESEND_API_KEY is not set.");
-    console.log("--- CONTACT EMAIL SIMULATION ---");
-    console.log(`To: ${targetEmail}`);
-    console.log(`From: ${data.name} (${data.email})`);
-    console.log(`Phone: ${data.phone}`);
-    console.log(`Subject: ${data.subject}`);
-    console.log(`Message: ${data.message}`);
-    console.log("--- END SIMULATION ---");
-    return { success: true, simulated: true };
-  }
-
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`
-      },
-      body: JSON.stringify({
-        from: 'LuckyGifts Contact <onboarding@resend.dev>',
-        to: targetEmail,
-        subject: `New Contact Message: ${data.subject} from ${data.name}`,
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #000;">New Contact Message</h2>
-            <p><strong>Name:</strong> ${data.name}</p>
-            <p><strong>Email:</strong> ${data.email}</p>
-            <p><strong>Phone:</strong> ${data.phone}</p>
-            <p><strong>Subject:</strong> ${data.subject}</p>
-            <p><strong>Message:</strong></p>
-            <div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
-              ${data.message.replace(/\n/g, '<br>')}
-            </div>
-          </div>
-        `
-      })
-    });
-
-    const result = await response.json();
-    return { success: response.ok, ...result };
-  } catch (error) {
-    console.error("Error sending contact message:", error);
-    return { success: false, error };
-  }
+  const html = `
+    <div style="font-family: sans-serif; padding: 20px; color: #333;">
+      <h2 style="color: #000;">New Contact Message</h2>
+      <p><strong>Name:</strong> ${data.name}</p>
+      <p><strong>Email:</strong> ${data.email}</p>
+      <p><strong>Phone:</strong> ${data.phone}</p>
+      <p><strong>Subject:</strong> ${data.subject}</p>
+      <p><strong>Message:</strong></p>
+      <div style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
+        ${data.message.replace(/\n/g, '<br>')}
+      </div>
+    </div>
+  `;
+  return sendEmail(ADMIN_EMAIL, `New Contact: ${data.subject} from ${data.name}`, html);
 };

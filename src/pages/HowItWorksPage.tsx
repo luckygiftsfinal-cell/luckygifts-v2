@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Diamond, Ticket, Trophy, Sparkles } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function HowItWorksPage() {
   const steps = [
@@ -40,6 +41,12 @@ export default function HowItWorksPage() {
 
   return (
     <div style={{ 
+      <SEO
+        title="How It Works — Buy, Enter and Win"
+        description="Learn how LuckyGifts works. Buy any product, get automatic entry tickets, and win life-changing luxury prizes."
+        url="/how-it-works"
+        keywords="how to win prizes UAE, lucky draw explained, prize draw rules Dubai"
+      />
       minHeight: "100vh", 
       background: "url('/images/hero-bg.png') center/cover no-repeat fixed",
       position: "relative",

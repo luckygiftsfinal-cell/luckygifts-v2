@@ -4,16 +4,23 @@ import PopularProducts from "../sections/PopularProducts";
 import Testimonials from "../sections/Testimonials";
 import { Shield, Zap, Award, Star } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import SEO from "../components/SEO";
 
 export default function HomePage() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-[#050505]">
+    <div className="min-h-screen bg-[#0a0a0f]">
+      <SEO
+        title="Shop Now & Win Big — Luxury Prizes"
+        description="Buy premium lifestyle products and automatically enter life-changing luxury prize draws — Rolex, iPhone, Cash, Cars & more. 250,000+ tickets sold. Free worldwide shipping."
+        url="/"
+        keywords="luxury prizes UAE, win prizes Dubai, lucky draw online, win car UAE, win cash prizes, prize draw"
+      />
       <HeroSection />
       
-      {/* Animated Glassy Yellow Trust Bar Ticker */}
-      <div className="bg-[#FFD700]/10 backdrop-blur-md border-y border-[#FFD700]/30 shadow-[0_0_30px_rgba(255,215,0,0.1)] py-4 overflow-hidden relative">
+      {/* Animated Trust Bar */}
+      <div className="bg-[#FFD700] py-3 overflow-hidden relative border-y border-[#E6B800]">
         <div className="flex whitespace-nowrap animate-ticker hover:[animation-play-state:paused]">
           {[1, 2, 3, 4].map((group) => (
             <div key={group} className="flex items-center gap-16 px-8">
@@ -24,8 +31,8 @@ export default function HomePage() {
                 { icon: Star, label: t("trustScoreLabel") },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <item.icon size={16} className="text-[#FFD700]" />
-                  <span className="text-[10px] font-black text-white uppercase tracking-[0.25em] drop-shadow-md">{item.label}</span>
+                  <item.icon size={16} className="text-black/60" />
+                  <span className="text-xs font-black text-black uppercase tracking-[0.25em]">{item.label}</span>
                 </div>
               ))}
             </div>

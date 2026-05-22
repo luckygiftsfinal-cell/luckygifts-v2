@@ -2,12 +2,10 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ShoppingCart, User, Search, ChevronDown, Ticket, Crown, Menu, X, Globe, Coins } from "lucide-react";
+import { ShoppingCart, User, ChevronDown, Ticket, Crown, Menu, X, Globe, Coins } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { useAuth } from "../context/AuthContext";
-import { useCart } from "../context/CartContext";
-import { translations } from "../translations";
 
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
@@ -15,7 +13,6 @@ export default function Navigation() {
   const { lang, setLang, t, isRTL } = useLanguage();
   const { currency, setCurrency } = useCurrency();
   const { user, isAuthenticated, isAdmin, setModalOpen, logout, earnedTickets } = useAuth();
-  const { setIsCartOpen, totalItems } = useCart();
   const [profileOpen, setProfileOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -52,30 +49,33 @@ export default function Navigation() {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-[1002] h-6 ticker-wrap">
+      <div className="fixed top-0 left-0 right-0 z-[1002] h-5 lg:h-6 ticker-wrap">
         <div className="ticker-inner h-full flex items-center">
-          {[1, 2].map((group) => (
-            <div key={group} className="flex items-center">
+          {[1, 2, 3, 4].map((group) => (
+            <div key={group} className="flex items-center shrink-0">
               {[
                 t("freeShipping"),
                 t("verifiedWinners"),
                 t("securePayments"),
               ].map((text, i) => (
-                <span key={i} className="text-[9px] font-black text-black px-10 uppercase tracking-wider whitespace-nowrap">{text}</span>
+                <span key={i} className="flex items-center text-xs font-black text-black uppercase tracking-wider whitespace-nowrap">
+                  <span className="px-6">{text}</span>
+                  <span className="text-black/40 text-sm">✦</span>
+                </span>
               ))}
             </div>
           ))}
         </div>
       </div>
 
-      <nav className={`fixed top-6 left-0 right-0 z-[1001] transition-all duration-300 ${scrolled ? 'glass' : 'bg-[#0A0A0A]'}`}>
-        <div className="container py-4">
-          <div className="flex items-center gap-8 mb-6">
+      <nav className={`fixed top-5 lg:top-6 left-0 right-0 z-[1001] transition-all duration-300 ${scrolled ? 'glass' : 'bg-[#0A0A0A]'}`}>
+        <div className="container py-2 lg:py-4">
+          <div className="flex items-center gap-3 lg:gap-8 mb-2 lg:mb-6">
             <Link to="/" className={`flex-shrink-0 flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <img src="/images/logo.png" alt="Icon" className="h-12 w-auto" />
+              <img src="/images/logo.png" alt="Icon" className="h-8 lg:h-12 w-auto" />
               <div className={`flex flex-col ${isRTL ? 'items-end' : ''}`}>
-                <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                  <div className="text-2xl font-black italic tracking-tighter leading-none">
+                <div className={`flex items-center gap-1.5 lg:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className="text-lg lg:text-2xl font-black italic tracking-tighter leading-none">
                     <span className="text-white">LUCKY</span>
                     <span className="text-[#FFD700]">GIFTS</span>
                   </div>
@@ -84,25 +84,38 @@ export default function Navigation() {
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     className="bg-[#00C853]/10 border border-[#00C853]/50 shadow-[0_0_15px_rgba(0,200,83,0.3)] rounded px-2 py-0.5 flex items-center gap-1 ml-2"
                   >
-                    <span className="text-[#00C853] text-[9px] font-black uppercase tracking-widest">★ {t("trustedStore")}</span>
+                    <span className="text-[#00C853] text-xs font-black uppercase tracking-widest">★ {t("trustedStore")}</span>
                   </motion.div>
                 </div>
                 <div className="flex items-center gap-2 mt-1 w-full">
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent opacity-50" />
-                  <span className="text-[8px] font-black text-[#FFD700] uppercase tracking-[0.2em] whitespace-nowrap">{t("shopAndWin")}</span>
+                  <span className="text-xs font-black text-[#FFD700] uppercase tracking-[0.2em] whitespace-nowrap">{t("shopAndWin")}</span>
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent opacity-50" />
                 </div>
               </div>
             </Link>
 
-            <div className="flex-1 hidden lg:flex items-center relative">
-              <input
-                type="text"
-                placeholder={t("search")}
-                dir={isRTL ? "rtl" : "ltr"}
-                className={`w-full bg-white rounded-full py-2.5 ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-sm text-black focus:outline-none`}
-              />
-              <Search className={`absolute ${isRTL ? 'right-4' : 'left-4'} text-gray-400`} size={18} />
+            {/* TAGLINE: One Step Away From Your Dream — WHITE with animation */}
+            <div className="flex-1 hidden lg:flex items-center justify-center">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                <motion.span 
+                  animate={{ 
+                    textShadow: [
+                      "0 0 5px rgba(255,255,255,0.3)",
+                      "0 0 20px rgba(255,255,255,0.6)",
+                      "0 0 5px rgba(255,255,255,0.3)"
+                    ]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="text-sm font-black text-white uppercase tracking-[0.3em] whitespace-nowrap"
+                >
+                  One Step Away From Your Dream
+                </motion.span>
+              </motion.div>
             </div>
 
             <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -167,11 +180,11 @@ export default function Navigation() {
                   <Ticket size={14} />
                 </div>
                 <div className="flex flex-col items-start justify-center">
-                  <span className="text-[8px] font-black text-[#FFD700]/70 uppercase tracking-widest leading-none mb-0.5">
+                  <span className="text-xs font-black text-[#FFD700]/70 uppercase tracking-widest leading-none mb-0.5">
                     {t("earned")}
                   </span>
                   <span className="text-sm font-black text-[#FFD700] leading-none uppercase tracking-tight">
-                    {earnedTickets} {t("tickets")}
+                    {earnedTickets} <span className="hidden sm:inline">{t("tickets")}</span>
                   </span>
                 </div>
               </div>
@@ -227,18 +240,6 @@ export default function Navigation() {
                   )}
                 </div>
               )}
-
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/5 transition-colors relative"
-              >
-                <ShoppingCart size={18} />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFD700] text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,215,0,0.5)]">
-                    {totalItems}
-                  </span>
-                )}
-              </button>
 
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
@@ -333,21 +334,12 @@ export default function Navigation() {
                     </div>
                   </div>
                 </div>
-
-                <div className="relative pt-4">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 mt-2" size={18} />
-                  <input
-                    type="text"
-                    placeholder={t("search")}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                  />
-                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </nav>
-      <div className="h-[140px] lg:h-[160px]" />
+      <div className="h-0" />
     </>
   );
 }

@@ -14,11 +14,13 @@ export default function WhyTrustUsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#f0ece4] pt-32 pb-24 font-['Outfit']">
+    <div className="min-h-screen bg-[#0a0a0f] text-[#f0ece4] pt-32 pb-24 font-['Outfit'] relative overflow-hidden">
       {/* Background glow */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#FFD700]/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#FFD700]/5 blur-[100px] rounded-full pointer-events-none" />
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gold/5 blur-[150px] rounded-full pointer-events-none z-0" />
       
-      <div className="container relative z-10 max-w-6xl px-4">
+      <div className="relative z-10 max-w-6xl px-4" style={{marginLeft: 'auto', marginRight: 'auto'}}>
         <div className="text-center mb-16">
           <span className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.4em] mb-4 block">Our Commitment</span>
           <h1 className="text-4xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter">Why Trust Us</h1>
@@ -27,7 +29,7 @@ export default function WhyTrustUsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
           {sections.map((s, i) => (
             <div 
               key={i} 

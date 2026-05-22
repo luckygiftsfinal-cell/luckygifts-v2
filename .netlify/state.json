@@ -1,3 +1,20 @@
 {
-	"siteId": "9dda3ebb-3f7c-4db9-9f7f-6c5990ec97f8"
+	"siteId": "155e4b39-5a22-44b3-a320-8064a0a2ab59",
+	"geolocation": {
+		"data": {
+			"city": "Sharjah",
+			"country": {
+				"code": "AE",
+				"name": "United Arab Emirates"
+			},
+			"subdivision": {
+				"code": "SH",
+				"name": "Emirate of Sharjah"
+			},
+			"timezone": "Asia/Dubai",
+			"latitude": 25.3412,
+			"longitude": 55.4224
+		},
+		"timestamp": 1779449976244
+	}
 }

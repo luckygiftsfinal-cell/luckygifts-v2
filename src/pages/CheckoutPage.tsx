@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { ShieldCheck, CreditCard, Apple, Wallet, ChevronRight, Lock, MapPin, Mail, User, Phone, ShoppingBag, ArrowLeft } from "lucide-react";
-import { useCart } from "../context/CartContext";
+import React, { useState, useEffect } from "react";
+import { ShieldCheck, Wallet, ChevronRight, Lock, MapPin, Mail, User, Phone, ShoppingBag, ArrowLeft, CreditCard } from "lucide-react";
 import { useCurrency } from "../context/CurrencyContext";
 import { useLanguage } from "../context/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,20 +8,72 @@ import { toast } from "sonner";
 import PayPalModal from "../components/PayPalModal";
 import CryptoModal from "../components/CryptoModal";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 import { useStore } from "../context/StoreContext";
+import { useCart } from "../context/CartContext";
 import { sendOrderConfirmationEmail } from "../lib/emailService";
 import { isValidPhone } from "../lib/validation";
 
 export default function CheckoutPage() {
-  const { items, totalPrice, totalItems, clearCart, totalTickets } = useCart();
   const { formatPrice } = useCurrency();
   const { lang, t } = useLanguage();
   const navigate = useNavigate();
+
+  // Read cart from CartContext (populated by addItem in ProductDetailPage)
+  const { items: cartItems, totalPrice, totalItems, totalTickets, clearCart } = useCart();
+
+  const items = cartItems.map(item => ({
+    ...item,
+    title: item.title || (item as any).name,
+    price: item.price?.toString(),
+    tickets: item.tickets?.toString(),
+    mainImage: item.mainImage || (item as any).img_src,
+  }));
   const { user, isAuthenticated, isAdmin, setModalOpen, logout, earnedTickets, addTickets } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPayPalOpen, setIsPayPalOpen] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const [isCryptoOpen, setIsCryptoOpen] = useState(false);
+  const [paymentSettings, setPaymentSettings] = useState({
+    paypal_enabled: true,
+    stripe_enabled: false,
+    btc_enabled: false,
+    eth_enabled: false,
+    usdt_trc20_enabled: false,
+    usdt_erc20_enabled: false,
+  });
+
+  // Fetch payment settings from Supabase
+  useEffect(() => {
+    const fetchPaymentSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("app_settings")
+          .select("key, value")
+          .in("key", [
+            "paypal_enabled", "stripe_enabled", 
+            "btc_enabled", "eth_enabled", 
+            "usdt_trc20_enabled", "usdt_erc20_enabled"
+          ]);
+
+        if (error) throw error;
+
+        if (data) {
+          const settings: any = {};
+          data.forEach((row: any) => {
+            settings[row.key] = row.value === "true";
+          });
+          setPaymentSettings(prev => ({ ...prev, ...settings }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch payment settings:", err);
+      }
+    };
+
+    fetchPaymentSettings();
+  }, []);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -31,7 +82,7 @@ export default function CheckoutPage() {
   });
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
-  const { addOrder, issueTickets, validatePromoCode } = useStore();
+  const { addOrder, updateOrder, issueTickets, validatePromoCode } = useStore();
 
   React.useEffect(() => {
     // Refresh Lemon Squeezy to listen for new DOM elements if necessary
@@ -44,6 +95,23 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
+      // Save order to Supabase BEFORE redirecting to payment
+      const orderId = await addOrder({
+        user_id: user?.id,
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        total_amount: finalTotal,
+        discount_amount: calculateDiscount(),
+        payment_method: 'credit_card',
+        status: 'pending',
+        items: items,
+        tickets_earned: totalTickets,
+        payment_details: { provider: 'lemonsqueezy' },
+        referrer_id: localStorage.getItem('luckygifts_ref') || undefined
+      } as any);
+
       const response = await fetch("/.netlify/functions/create-checkout", {
         method: "POST",
         headers: {
@@ -53,7 +121,8 @@ export default function CheckoutPage() {
           items,
           userName: formData.name,
           userEmail: formData.email,
-          totalPrice: finalTotal
+          totalPrice: finalTotal,
+          orderId
         })
       });
 
@@ -64,6 +133,7 @@ export default function CheckoutPage() {
       }
 
       if (data.checkoutUrl) {
+        clearCart();
         if ((window as any).LemonSqueezy) {
           (window as any).LemonSqueezy.Url.Open(data.checkoutUrl);
         } else {
@@ -98,7 +168,7 @@ export default function CheckoutPage() {
 
   const finalTotal = totalPrice - calculateDiscount();
 
-  const handleCheckout = (e: React.FormEvent) => {
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -118,12 +188,31 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    if (paymentMethod === 'card') {
-      handleLemonSqueezyCheckout();
-    } else if (paymentMethod === 'paypal') {
-      // PayPal Flow - Open Modal
-      setIsProcessing(false);
-      setIsPayPalOpen(true);
+    if (paymentMethod === 'paypal') {
+      // PayPal Flow - Save order as 'pending' BEFORE opening modal
+      // This ensures the order is recorded even if DB fails after payment
+      try {
+        const orderId = await addOrder({
+          user_id: user?.id,
+          full_name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          total_amount: finalTotal,
+          discount_amount: calculateDiscount(),
+          payment_method: 'paypal',
+          status: 'pending',
+          items: items,
+          tickets_earned: totalTickets,
+          referrer_id: localStorage.getItem('luckygifts_ref') || undefined
+        } as any);
+        setPendingOrderId(orderId);
+        setIsProcessing(false);
+        setIsPayPalOpen(true);
+      } catch (err) {
+        setIsProcessing(false);
+        toast.error(lang === 'AR' ? 'فشل تجهيز الطلب، يرجى المحاولة مجدداً' : 'Failed to prepare order, please try again.');
+      }
     } else {
       // Crypto Flow - Open Modal
       setIsProcessing(false);
@@ -284,16 +373,17 @@ export default function CheckoutPage() {
             >
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700]">
-                  <CreditCard size={20} />
+                  <Wallet size={20} />
                 </div>
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("paymentMethod")}</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                 {[
-                  { id: "card", name: "Credit Card", icon: <CreditCard size={18} /> },
-                  { id: "paypal", name: "PayPal", icon: <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" className="h-3 grayscale brightness-200" /> },
-                  { id: "crypto", name: "Crypto", icon: <Wallet size={18} /> }
+                  ...(paymentSettings.paypal_enabled ? [{ id: "paypal", name: "PayPal", icon: <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" className="h-3 grayscale brightness-200" /> }] : []),
+                  ...(paymentSettings.stripe_enabled ? [{ id: "stripe", name: "Credit Card", icon: <CreditCard size={18} /> }] : []),
+                  ...((paymentSettings.btc_enabled || paymentSettings.eth_enabled || paymentSettings.usdt_trc20_enabled || paymentSettings.usdt_erc20_enabled) 
+                    ? [{ id: "crypto", name: "Crypto", icon: <Wallet size={18} /> }] : [])
                 ].map((method) => (
                   <button
                     key={method.id}
@@ -312,7 +402,7 @@ export default function CheckoutPage() {
 
               <div className="space-y-6">
                 <div className="flex items-start gap-4 p-5 bg-white/5 border border-white/10 rounded-2xl">
-                  {paymentMethod === 'card' ? <Lock className="text-[#FFD700] shrink-0 mt-1" size={20} /> : <ShieldCheck className="text-[#00C853] shrink-0 mt-1" size={20} />}
+                  {paymentMethod === 'paypal' ? <ShieldCheck className="text-[#00C853] shrink-0 mt-1" size={20} /> : <ShieldCheck className="text-[#00C853] shrink-0 mt-1" size={20} />}
                   <div className="space-y-1">
                     <p className="text-xs text-white/80 font-bold uppercase tracking-wide">{t("secureTransaction")}</p>
                     <p className="text-[10px] text-white/40 font-medium leading-relaxed">
@@ -445,22 +535,17 @@ export default function CheckoutPage() {
             setIsPayPalOpen(false);
             toast.success(lang === 'AR' ? "تم الدفع بنجاح!" : "Payment successful!");
             try {
-              const orderId = await addOrder({
-                user_id: user?.id,
-                full_name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
-                address: formData.address,
-                total_amount: finalTotal,
-                discount_amount: calculateDiscount(),
-                payment_method: 'paypal',
+              // Order already saved as 'pending' before modal opened.
+              // Now update it to 'paid' using the stored pendingOrderId.
+              const orderId = pendingOrderId;
+              if (!orderId) throw new Error("Missing pending order ID");
+
+              await updateOrder({
+                id: orderId,
                 status: 'paid',
-                items: items,
-                tickets_earned: totalTickets,
-                referrer_id: localStorage.getItem('luckygifts_ref') || undefined
               } as any);
 
-              if (user?.id && orderId) {
+              if (user?.id) {
                 const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
 
                 // Send Email
@@ -475,10 +560,11 @@ export default function CheckoutPage() {
               }
 
               await addTickets(totalTickets);
+              setPendingOrderId(null);
               clearCart();
               navigate("/");
             } catch (err) {
-              toast.error("Failed to save order to database");
+              toast.error(lang === 'AR' ? "تم الدفع لكن فشل تحديث الطلب، تواصل مع الدعم" : "Payment received but order update failed. Please contact support.");
             }
           }}
         />

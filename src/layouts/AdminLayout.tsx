@@ -1,120 +1,158 @@
-import React, { useEffect } from "react";
-import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { LayoutDashboard, Layout, Package, Users, ShoppingCart, Settings, LogOut, Search, Bell, Crown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
+import { 
+  LayoutDashboard, 
+  Package, 
+  Store, 
+  ShoppingCart, 
+  Users, 
+  Crown, 
+  Trophy, 
+  Settings, 
+  LogOut,
+  Menu,
+  Bell,
+  Search,
+  ChevronRight,
+  Tag,
+  Briefcase
+} from "lucide-react";
+import { supabase } from "../lib/supabase";
+
+const sidebarItems = [
+  { path: "/admin", icon: LayoutDashboard, label: "Overview", exact: true },
+  { path: "/admin/products", icon: Package, label: "Products" },
+  { path: "/admin/dream-store", icon: Store, label: "Dream Store" },
+  { path: "/admin/orders", icon: ShoppingCart, label: "Orders" },
+  { path: "/admin/users", icon: Users, label: "VIP Users" },
+  { path: "/admin/vip-packages", icon: Crown, label: "VIP Packages" },
+  { path: "/admin/winners", icon: Trophy, label: "Winners" },
+  { path: "/admin/promo-codes", icon: Tag, label: "Promo & Referrals" },
+  { path: "/admin/applications", icon: Briefcase, label: "Applications", badge: true },
+  { path: "/admin/settings", icon: Settings, label: "Settings" },
+];
 
 export default function AdminLayout() {
-  const { user, isAdmin, isLoading, logout } = useAuth();
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const location = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      navigate("/");
-    }
-  }, [isLoading, isAdmin, navigate]);
-
-  if (isLoading || !isAdmin) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#FFD700] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const navItems = [
-    { name: "Overview", path: "/admin", icon: <LayoutDashboard size={20} /> },
-    { name: "Products", path: "/admin/products", icon: <Package size={20} /> },
-    { name: "Dream Store", path: "/admin/dream-store", icon: <Layout size={20} /> },
-    { name: "Orders", path: "/admin/orders", icon: <ShoppingCart size={20} /> },
-    { name: "VIP Users", path: "/admin/users", icon: <Users size={20} /> },
-    { name: "VIP Packages", path: "/admin/vip-packages", icon: <Crown size={20} /> },
-    { name: "Settings", path: "/admin/settings", icon: <Settings size={20} /> },
-  ];
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from("work_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      setPendingCount(count || 0);
+    };
+    fetchPending();
+    const interval = setInterval(fetchPending, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="flex h-screen bg-[#050505] text-[#f0ece4] font-['Outfit'] overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#0a0a0a] border-r border-white/10 flex flex-col hidden md:flex z-20">
-        <div className="h-20 flex items-center px-8 border-b border-white/10">
-          <Link to="/" className="text-xl font-black italic tracking-tighter leading-none">
-            <span className="text-white">LUCKY</span>
-            <span className="text-[#FFD700]">GIFTS</span>
-            <span className="ml-2 text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded uppercase tracking-widest">Admin</span>
+    <div className="min-h-screen bg-[#0a0a0f] flex">
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside 
+        className={`sidebar fixed lg:static inset-y-0 left-0 z-50 w-[250px] flex flex-col transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="sidebar-logo">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FFD700] to-[#FFC107] flex items-center justify-center">
+              <span className="text-[#0a0a0f] font-bold text-base">L</span>
+            </div>
+            <div>
+              <h1 className="font-bold text-white text-base tracking-tight leading-tight">LUCKYGIFTS</h1>
+              <p className="text-[10px] text-[#FFD700] font-bold tracking-widest uppercase leading-tight">Admin Panel</p>
+            </div>
           </Link>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.path;
+        <nav className="flex-1 py-3 overflow-y-auto">
+          <p className="sidebar-section-title">Main Menu</p>
+          {sidebarItems.map((item) => {
+            const isActive = item.exact 
+              ? location.pathname === item.path 
+              : location.pathname.startsWith(item.path);
+
             return (
-              <Link
+              <NavLink
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold ${isActive
-                    ? "bg-[#FFD700]/10 text-[#FFD700] shadow-[inset_4px_0_0_#FFD700]"
-                    : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
+                onClick={() => setSidebarOpen(false)}
+                className={`sidebar-item ${isActive ? "active" : ""}`}
               >
-                {item.icon}
-                {item.name}
-              </Link>
+                <item.icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
+                <span>{item.label}</span>
+                {item.badge && pendingCount > 0 && (
+                  <span className="ml-auto bg-[#EF4444] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {pendingCount}
+                  </span>
+                )}
+                {isActive && !item.badge && (
+                  <ChevronRight size={14} className="ml-auto text-[#FFD700] opacity-60" />
+                )}
+              </NavLink>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
-          <button
-            onClick={() => {
-              logout();
-              navigate("/");
-            }}
-            className="flex items-center gap-4 px-4 py-3 w-full rounded-xl text-[#FF4500] hover:bg-[#FF4500]/10 font-bold transition-colors"
-          >
-            <LogOut size={20} />
-            Logout
+        <div className="sidebar-user">
+          <div className="sidebar-user-card">
+            <div className="sidebar-user-avatar">A</div>
+            <div className="sidebar-user-info">
+              <p className="sidebar-user-name">Admin User</p>
+              <p className="sidebar-user-role">Super Admin</p>
+            </div>
+          </div>
+          <button className="logout-btn">
+            <LogOut size={15} />
+            <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
-        {/* Background glow for the content area */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#FFD700]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
-
-        {/* Top Header */}
-        <header className="h-20 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-8 z-20 shrink-0">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="relative w-full max-w-md hidden lg:block">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-              <input
-                type="text"
-                placeholder="Search orders, users, products..."
-                className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-12 pr-4 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#FFD700]/50 transition-colors"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <button className="relative text-white/60 hover:text-white transition-colors">
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#FFD700] rounded-full shadow-[0_0_10px_#FFD700]" />
-            </button>
-            <div className="h-8 w-[1px] bg-white/10" />
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="admin-header sticky top-0 z-30 px-5 py-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-white leading-none">{user?.name}</p>
-                <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Super Admin</p>
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-white/5 text-[#64748b]"
+              >
+                <Menu size={18} />
+              </button>
+              <div className="relative hidden sm:block">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
+                <input 
+                  type="text" 
+                  placeholder="Search orders, users, products..."
+                  className="search-input w-[300px]"
+                />
               </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-[#FFD700] to-[#B8860B] rounded-full flex items-center justify-center text-black font-black shadow-[0_0_15px_rgba(255,215,0,0.3)]">
-                {user?.name?.charAt(0).toUpperCase() || "A"}
-              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="relative p-2 rounded-lg hover:bg-white/5 text-[#64748b] transition-colors">
+                <Bell size={18} />
+                {pendingCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#EF4444] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </header>
 
-        {/* Dynamic Page Content */}
-        <main className="flex-1 overflow-y-auto p-8 relative z-10">
+        <main className="flex-1 p-5 overflow-y-auto">
           <Outlet />
         </main>
       </div>

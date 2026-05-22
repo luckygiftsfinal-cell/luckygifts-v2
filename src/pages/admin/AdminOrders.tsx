@@ -1,250 +1,273 @@
-import React, { useState } from "react";
-import { Search, Filter, Download, Eye, CheckCircle, Clock, XCircle, Truck } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useMemo } from "react";
+import { Search, Filter, Download, Eye, Package, Truck, CheckCircle, XCircle, Clock, Loader2 } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
+import { supabase } from "../../lib/supabase";
+import { toast } from "sonner";
 
-// Removed mockOrders in favor of Supabase data from StoreContext
+// Status configuration
+const statusConfig = {
+  delivered: { icon: CheckCircle, color: "#10B981", bg: "rgba(16, 185, 129, 0.15)", label: "Delivered" },
+  processing: { icon: Clock, color: "#3B82F6", bg: "rgba(59, 130, 246, 0.15)", label: "Processing" },
+  shipped: { icon: Truck, color: "#8B5CF6", bg: "rgba(139, 92, 246, 0.15)", label: "Shipped" },
+  pending: { icon: Package, color: "#FFC107", bg: "rgba(255, 193, 7, 0.15)", label: "Pending" },
+  cancelled: { icon: XCircle, color: "#EF4444", bg: "rgba(239, 68, 68, 0.15)", label: "Cancelled" },
+  paid: { icon: CheckCircle, color: "#10B981", bg: "rgba(16, 185, 129, 0.15)", label: "Paid" },
+};
 
 export default function AdminOrders() {
-  const { orders, updateOrder } = useStore();
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const { orders: storeOrders, refreshData } = useStore();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "Delivered":
-      case "paid": return "bg-[#00C853]/10 text-[#00C853] border-[#00C853]/20";
-      case "Pending": return "bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20";
-      case "Processing": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-      case "Shipped": return "bg-purple-500/10 text-purple-500 border-purple-500/20";
-      case "Cancelled": return "bg-red-500/10 text-red-500 border-red-500/20";
-      default: return "bg-white/5 text-white/40 border-white/10";
+  // Use real orders from store, fallback to empty array
+  const orders = storeOrders || [];
+
+  // Filter orders based on search and status
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        order.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (Array.isArray(order.items) && order.items.some((item: any) =>
+          item.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+
+      const matchesStatus =
+        statusFilter === "all" || order.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, searchQuery, statusFilter]);
+
+  // Calculate stats from real data
+  const stats = useMemo(() => {
+    const total = orders.length;
+    const delivered = orders.filter((o) => o.status === "delivered").length;
+    const pending = orders.filter((o) => o.status === "pending" || o.status === "processing").length;
+    const cancelled = orders.filter((o) => o.status === "cancelled").length;
+    const totalRevenue = orders
+      .filter((o) => o.status === "paid" || o.status === "delivered")
+      .reduce((sum, o) => sum + (o.total_amount || 0), 0);
+
+    return [
+      { label: "Total Orders", value: total.toLocaleString(), color: "#3B82F6" },
+      { label: "Delivered", value: delivered.toLocaleString(), color: "#10B981" },
+      { label: "Pending", value: pending.toLocaleString(), color: "#FFC107" },
+      { label: "Revenue", value: `$${(totalRevenue / 1000).toFixed(1)}k`, color: "#8B5CF6" },
+    ];
+  }, [orders]);
+
+  // Export to CSV
+  const handleExport = async () => {
+    if (filteredOrders.length === 0) {
+      toast.error("No orders to export");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Prepare CSV data
+      const headers = ["Order ID", "Customer", "Email", "Items", "Amount", "Status", "Payment", "Date"];
+      const rows = filteredOrders.map((order) => [
+        order.id,
+        order.full_name || "N/A",
+        order.email || "N/A",
+        Array.isArray(order.items)
+          ? order.items.map((item: any) => item.title).join("; ")
+          : "N/A",
+        `$${order.total_amount?.toFixed(2) || "0.00"}`,
+        order.status,
+        order.payment_method || "N/A",
+        new Date(order.created_at).toLocaleDateString(),
+      ]);
+
+      const csvContent = [headers.join(","), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(","))].join("\n");
+
+      // Download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `orders_export_${new Date().toISOString().split("T")[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Exported ${filteredOrders.length} orders successfully`);
+    } catch (error) {
+      toast.error("Export failed");
+      console.error("Export error:", error);
+    } finally {
+      setIsExporting(false);
     }
   };
 
-  const updateStatus = (id: string, newStatus: string) => {
-    const order = orders.find(o => o.id === id);
-    if (order) {
-      updateOrder({ ...order, status: newStatus });
-      toast.success(`Order ${id} updated to ${newStatus}`);
+  // Refresh data
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    try {
+      await refreshData();
+      toast.success("Orders refreshed");
+    } catch (error) {
+      toast.error("Failed to refresh");
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const exportToCSV = () => {
-    const headers = ["Order ID", "Customer", "Date", "Total", "Status", "Payment"];
-    const rows = orders.map(o => [o.id, o.full_name, new Date(o.created_at).toLocaleDateString(), o.total_amount, o.status, o.payment_method]);
-    
-    let csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n"
-      + rows.map(e => e.join(",")).join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `LuckyGifts_Orders_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("CSV Exported successfully!");
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 animate-fade-in-up">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white uppercase tracking-tight mb-2">Orders Management</h1>
-          <p className="text-white/40">Track and manage customer purchases and delivery status.</p>
+          <h1 className="text-2xl font-bold text-white">Orders</h1>
+          <p className="text-sm text-[#64748b] mt-1">
+            {orders.length} total orders · {filteredOrders.length} shown
+          </p>
         </div>
-        <button 
-          onClick={exportToCSV}
-          className="bg-white/5 hover:bg-white/10 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all border border-white/10"
-        >
-          <Download size={18} /> Export CSV
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="btn-secondary"
+          >
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
+            Refresh
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={isExporting || filteredOrders.length === 0}
+            className="btn-primary"
+          >
+            {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <div key={stat.label} className="admin-card text-center">
+            <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+            <p className="text-xs text-[#64748b] mt-1">{stat.label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 flex flex-wrap items-center gap-4">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search by Order ID or Customer..." 
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700]/50 transition-colors"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter size={18} className="text-white/40" />
-          <select className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none">
-            <option>All Status</option>
-            <option>Pending</option>
-            <option>Processing</option>
-            <option>Shipped</option>
-            <option>Delivered</option>
-            <option>Cancelled</option>
-          </select>
+      <div className="admin-card">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b]" />
+            <input
+              type="text"
+              placeholder="Search orders, customers, products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input w-full"
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+            {["all", "pending", "processing", "shipped", "delivered", "cancelled"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all whitespace-nowrap ${
+                  statusFilter === f
+                    ? "bg-[#FFD700]/15 text-[#FFD700] border border-[#FFD700]/30"
+                    : "bg-white/5 text-[#94a3b8] hover:bg-white/10"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-lg">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[900px]">
+      <div className="admin-card overflow-x-auto">
+        {filteredOrders.length === 0 ? (
+          <div className="py-16 text-center">
+            <Package size={48} className="mx-auto text-[#475569] mb-4" />
+            <p className="text-[#64748b]">
+              {orders.length === 0 ? "No orders yet" : "No orders match your filters"}
+            </p>
+          </div>
+        ) : (
+          <table className="data-table">
             <thead>
-              <tr className="bg-white/5 text-[10px] font-black text-white/40 uppercase tracking-widest">
-                <th className="py-5 px-6">Order ID</th>
-                <th className="py-5 px-6">Customer</th>
-                <th className="py-5 px-6">Date</th>
-                <th className="py-5 px-6">Total</th>
-                <th className="py-5 px-6">Status</th>
-                <th className="py-5 px-6">Payment</th>
-                <th className="py-5 px-6 text-right">Actions</th>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Products</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Date</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="py-4 px-6 font-mono text-[10px] text-[#FFD700] font-bold">{order.id}</td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFD700]/20 to-transparent flex items-center justify-center text-xs font-bold text-[#FFD700]">
-                        {order.full_name?.charAt(0) || "U"}
+            <tbody>
+              {filteredOrders.map((order) => {
+                const statusKey = order.status as keyof typeof statusConfig;
+                const config = statusConfig[statusKey] || statusConfig.pending;
+                const StatusIcon = config.icon;
+
+                // Format items
+                const itemsText = Array.isArray(order.items)
+                  ? order.items.map((item: any) => item.title).join(", ")
+                  : "N/A";
+
+                return (
+                  <tr key={order.id}>
+                    <td className="font-mono text-sm text-[#FFD700]">
+                      #{order.id?.slice(-6).toUpperCase()}
+                    </td>
+                    <td>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{order.full_name || "N/A"}</p>
+                        <p className="text-xs text-[#64748b]">{order.email || "N/A"}</p>
                       </div>
-                      <span className="text-white font-medium">{order.full_name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-white/60 text-sm">{new Date(order.created_at).toLocaleDateString()}</td>
-                  <td className="py-4 px-6 text-white font-black">${order.total_amount?.toLocaleString()}</td>
-                  <td className="py-4 px-6">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyle(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-white/40 text-[10px] font-bold uppercase tracking-widest">{order.payment_method}</td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => setSelectedOrder(order)}
-                        className="p-2 text-white/40 hover:text-white transition-colors"
+                    </td>
+                    <td>
+                      <p className="text-sm text-[#94a3b8] max-w-[200px] truncate" title={itemsText}>
+                        {itemsText}
+                      </p>
+                    </td>
+                    <td className="font-bold text-white">
+                      ${order.total_amount?.toFixed(2) || "0.00"}
+                    </td>
+                    <td>
+                      <span
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+                        style={{ background: config.bg, color: config.color }}
                       >
+                        <StatusIcon size={12} />
+                        {config.label}
+                      </span>
+                    </td>
+                    <td className="text-[#94a3b8] capitalize">{order.payment_method || "N/A"}</td>
+                    <td className="text-[#94a3b8]">
+                      {new Date(order.created_at).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <button className="p-2 rounded-lg hover:bg-white/5 text-[#94a3b8]">
                         <Eye size={16} />
                       </button>
-                      <div className="w-[1px] h-4 bg-white/10" />
-                      <button 
-                        onClick={() => updateStatus(order.id, "Delivered")}
-                        className="p-2 text-white/40 hover:text-[#00C853] transition-colors"
-                      >
-                        <CheckCircle size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-        </div>
+        )}
       </div>
-
-      {/* Order Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setSelectedOrder(null)} />
-          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Order Details</h3>
-                <p className="text-white/40 text-xs font-mono">{selectedOrder.id}</p>
-                <p className="text-white/40 text-sm">{new Date(selectedOrder.created_at).toLocaleString()}</p>
-                <div className="mt-2">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyle(selectedOrder.status)}`}>
-                    {selectedOrder.status}
-                  </span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setSelectedOrder(null)}
-                className="p-2 text-white/20 hover:text-white transition-colors"
-              >
-                <XCircle size={24} />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 mb-8">
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Customer Details</h4>
-                <div className="text-sm">
-                  <p className="text-white font-bold">{selectedOrder.full_name}</p>
-                  <p className="text-white/40">{selectedOrder.email}</p>
-                  <p className="text-white/40">{selectedOrder.phone}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Payment Info</h4>
-                <div className="text-sm">
-                  <p className="text-white font-bold uppercase">{selectedOrder.payment_method}</p>
-                  {selectedOrder.transaction_id && (
-                    <p className="text-white/40 font-mono text-[10px] break-all mt-1">TXID: {selectedOrder.transaction_id}</p>
-                  )}
-                  <p className="text-white/40 mt-1">{selectedOrder.address}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Order Items</h4>
-              <div className="space-y-3">
-                {selectedOrder.items?.map((item: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden border border-white/10">
-                        <img src={item.mainImage} alt={item.title} className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-white font-bold italic">{item.title}</p>
-                        <p className="text-[10px] text-white/30 uppercase tracking-widest">Qty: {item.quantity}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-white font-black">${(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white/5 rounded-2xl p-6 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-white/40">Subtotal</span>
-                <span className="text-white font-medium">${selectedOrder.total_amount?.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-white/40">Shipping</span>
-                <span className="text-[#00C853] font-bold uppercase text-[10px]">Free</span>
-              </div>
-              <div className="flex justify-between text-lg font-black border-t border-white/10 pt-3">
-                <span className="text-white uppercase tracking-widest">Total</span>
-                <span className="text-[#FFD700]">${selectedOrder.total_amount?.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <div className="mt-8 flex gap-3">
-              <button 
-                onClick={() => setSelectedOrder(null)}
-                className="flex-1 py-3 rounded-xl border border-white/10 text-white/40 font-bold uppercase tracking-widest text-xs hover:text-white transition-all"
-              >
-                Close Details
-              </button>
-              <button 
-                onClick={() => {
-                  updateStatus(selectedOrder.id, "Shipped");
-                  setSelectedOrder(null);
-                }}
-                className="flex-1 py-3 rounded-xl bg-[#FFD700] text-black font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2"
-              >
-                <Truck size={14} /> Mark as Shipped
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -18,7 +18,7 @@ const FAQPage = lazy(() => import("./pages/FAQPage"));
 const PrizesPage = lazy(() => import("./pages/PrizesPage"));
 const HowItWorksPage = lazy(() => import("./pages/HowItWorksPage"));
 const VIPPage = lazy(() => import("./pages/VIPPage"));
-const DreamStorePage = lazy(() => import("./pages/DreamStorePage"));
+const VIPContactPage = lazy(() => import("./pages/VIPContactPage"));
 const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
@@ -64,21 +64,34 @@ function ScrollToTop() {
 }
 
 function PayPalWrapper({ children }: { children: React.ReactNode }) {
-  const [paypalMode, setPaypalMode] = useState("sandbox");
+  const [clientId, setClientId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.from("app_settings").select("value").eq("key", "paypal_mode").single()
-      .then(({ data, error }) => { 
-        if (data?.value) setPaypalMode(data.value);
-        if (error) console.warn("PayPal mode fetch failed:", error);
+    supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["paypal_client_id"])
+      .then(({ data }) => {
+        const map: Record<string, string> = {};
+        data?.forEach((r: any) => { map[r.key] = r.value; });
+        setClientId(
+          map.paypal_client_id ||
+          import.meta.env.VITE_PAYPAL_CLIENT_ID ||
+          "test"
+        );
       });
   }, []);
 
+  // Wait until client ID is loaded
+  if (!clientId) return <>{children}</>;
+
   return (
     <PayPalScriptProvider options={{
-      "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID || "test",
+      "client-id": clientId,
       currency: "USD",
       intent: "capture",
+      components: "buttons",
+      "disable-funding": "paylater",
     }}>
       {children}
     </PayPalScriptProvider>
@@ -122,8 +135,8 @@ export default function App() {
                   <Route path="/prizes" element={<PrizesPage />} />
                   <Route path="/how-it-works" element={<HowItWorksPage />} />
                   <Route path="/vip" element={<VIPPage />} />
-                  <Route path="/store" element={<DreamStorePage />} />
-                  <Route path="/store/product/:id" element={<ProductDetailPage />} />
+                  <Route path="/vip-contact" element={<VIPContactPage />} />
+
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/about" element={<AboutUsPage />} />

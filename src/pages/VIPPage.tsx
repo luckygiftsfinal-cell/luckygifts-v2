@@ -187,16 +187,16 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
           ))}
         </ul>
 
-        <button 
-          onClick={handleSelect}
-          className="btn-primary" 
-          style={{ 
-            width: "100%", 
+        <button
+          onClick={() => navigate(`/vip-contact?package=${encodeURIComponent(pkg.name)}&price=${pkg.price}`)}
+          className="btn-primary"
+          style={{
+            width: "100%",
             justifyContent: "center",
           }}
         >
           <Zap size={20} />
-          BUY NOW
+          CONTACT US
         </button>
       </div>
     </motion.div>

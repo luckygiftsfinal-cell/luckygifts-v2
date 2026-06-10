@@ -85,7 +85,7 @@ export default function PrizesPage() {
       {/* Dark overlay for contrast */}
       <div style={{ position: "absolute", inset: 0, background: "rgba(5,5,5,0.85)", zIndex: 0 }} />
 
-      <div className="container" style={{ position: "relative", zIndex: 1, paddingTop: 140, paddingBottom: 80 }}>
+      <div className="container-custom" style={{ position: "relative", zIndex: 1, paddingTop: 140, paddingBottom: 80 }}>
         <div style={{ textAlign: "center", marginBottom: 60 }}>
           <div className="tag" style={{ marginBottom: 16 }}>Unlimited Dreams</div>
           <h1 className="text-4xl md:text-6xl font-black text-center text-white mb-6 italic tracking-tighter" style={{ fontSize: "clamp(42px, 7vw, 64px)", marginBottom: 20 }}>World-Class Prizes</h1>

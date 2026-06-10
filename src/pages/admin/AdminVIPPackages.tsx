@@ -275,17 +275,6 @@ export default function AdminVIPPackages() {
     toast.success(`Exported ${packages.length} packages`);
   };
 
-  // Toggle feature
-  const toggleFeature = (feature: string) => {
-    setForm((prev) => {
-      const features = prev.features || [];
-      if (features.includes(feature)) {
-        return { ...prev, features: features.filter((f) => f !== feature) };
-      }
-      return { ...prev, features: [...features, feature] };
-    });
-  };
-
   // Get icon component
   const getIcon = (iconName: string) => {
     const Icon = ICON_MAP[iconName] || Crown;
@@ -537,22 +526,56 @@ export default function AdminVIPPackages() {
               {/* Features */}
               <div>
                 <label className="form-label">Features</label>
+
+                {/* Existing features */}
                 <div className="space-y-2 mt-2">
-                  {DEFAULT_FEATURES.map((feature) => (
-                    <label key={feature} className="flex items-center gap-3 cursor-pointer">
-                      <div
-                        onClick={() => toggleFeature(feature)}
-                        className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${
-                          (form.features || []).includes(feature)
-                            ? "bg-[#FFD700] text-black"
-                            : "bg-white/10 border border-white/20"
-                        }`}
+                  {(form.features || []).map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        className="form-input flex-1 py-2 text-sm"
+                        value={feature}
+                        onChange={(e) => {
+                          const updated = [...(form.features || [])];
+                          updated[idx] = e.target.value;
+                          setForm({ ...form, features: updated });
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const updated = (form.features || []).filter((_, i) => i !== idx);
+                          setForm({ ...form, features: updated });
+                        }}
+                        className="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors shrink-0"
                       >
-                        {(form.features || []).includes(feature) && <Zap size={12} />}
-                      </div>
-                      <span className="text-sm text-[#94a3b8]">{feature}</span>
-                    </label>
+                        <X size={16} />
+                      </button>
+                    </div>
                   ))}
+                </div>
+
+                {/* Add new feature */}
+                <button
+                  onClick={() => setForm({ ...form, features: [...(form.features || []), ""] })}
+                  className="mt-3 flex items-center gap-2 text-sm text-[#FFD700] hover:text-[#f0d060] transition-colors"
+                >
+                  <Plus size={16} />
+                  Add Feature
+                </button>
+
+                {/* Quick add from defaults */}
+                <div className="mt-3">
+                  <p className="text-[10px] text-[#64748b] uppercase tracking-widest mb-2">Quick Add</p>
+                  <div className="flex flex-wrap gap-2">
+                    {DEFAULT_FEATURES.filter(f => !(form.features || []).includes(f)).map((feature) => (
+                      <button
+                        key={feature}
+                        onClick={() => setForm({ ...form, features: [...(form.features || []), feature] })}
+                        className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#94a3b8] hover:border-[#FFD700]/40 hover:text-[#FFD700] transition-all"
+                      >
+                        + {feature}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

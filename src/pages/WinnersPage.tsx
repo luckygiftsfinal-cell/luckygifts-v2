@@ -39,7 +39,7 @@ export default function WinnersPage() {
       />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,rgba(5,5,5,.95) 0%,rgba(5,5,5,.85) 50%,rgba(5,5,5,.95) 100%)", zIndex: 0 }} />
 
-      <div className="container" style={{ position: "relative", zIndex: 1, paddingTop: 120, paddingBottom: 80 }}>
+      <div className="container-custom" style={{ position: "relative", zIndex: 1, paddingTop: 120, paddingBottom: 80 }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 64 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 16, opacity: 0.8 }}>✦ HALL OF FAME ✦</div>

@@ -23,6 +23,7 @@
         "npm:react-dom@19",
         "npm:react-router-dom@7",
         "npm:react@19",
+        "npm:recharts@^3.8.1",
         "npm:sonner@^1.7.0",
         "npm:tailwind-merge@^2.5.0",
         "npm:tailwindcss@4",

@@ -1161,3 +1161,16 @@ body {
 .nav-link.active::after {
   width: 100%;
 }
+
+/* ── Checkout Grid ─────────────────────────────────────── */
+#checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+  #checkout-grid {
+    grid-template-columns: 7fr 5fr;
+  }
+}

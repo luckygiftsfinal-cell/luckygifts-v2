@@ -5,7 +5,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import PayPalModal from "../components/PayPalModal";
+import PayPalModal, { type PayPalCaptureDetails } from "../components/PayPalModal";
 import CryptoModal from "../components/CryptoModal";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -283,7 +283,7 @@ export default function CheckoutPage() {
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#FFD700]/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#FFD700]/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="container relative z-10">
+      <div className="container-custom relative z-10">
         <div className="flex items-center gap-4 mb-12">
           <Link to="/store" className="p-2 bg-white/5 rounded-full text-white/40 hover:text-white transition-colors">
             <ArrowLeft size={20} />
@@ -294,13 +294,13 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-12">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: "3rem" }} id="checkout-grid">
           {/* Main Form */}
-          <div className="lg:col-span-7 space-y-8">
+          <div style={{ minWidth: 0 }} className="space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl"
+              className="bg-[#111111] border border-white/15 rounded-3xl p-8 shadow-2xl"
             >
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700]">
@@ -312,55 +312,43 @@ export default function CheckoutPage() {
               <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("fullName")} <span className="text-[#FFD700]">*</span></label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input
-                      type="text"
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="John Doe"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-[#111111] border border-white/25 rounded-xl py-4 px-4 text-base text-white focus:outline-none focus:border-[#FFD700] focus:bg-[#1a1a1a] transition-all placeholder:text-white/30 placeholder:text-base"
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("emailAddress")} <span className="text-[#FFD700]">*</span></label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input
-                      type="email"
-                      placeholder="john@example.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                    />
-                  </div>
+                  <input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-[#111111] border border-white/25 rounded-xl py-4 px-4 text-base text-white focus:outline-none focus:border-[#FFD700] focus:bg-[#1a1a1a] transition-all placeholder:text-white/30 placeholder:text-base"
+                  />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("shippingAddress")} <span className="text-[#FFD700]">*</span></label>
-                  <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input
-                      type="text"
-                      placeholder="123 Luxury Ave, Dubai, UAE"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="123 Luxury Ave, Dubai, UAE"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="w-full bg-[#111111] border border-white/25 rounded-xl py-4 px-4 text-base text-white focus:outline-none focus:border-[#FFD700] focus:bg-[#1a1a1a] transition-all placeholder:text-white/30 placeholder:text-base"
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("phoneNumber")} <span className="text-[#FFD700]">*</span></label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                    <input
-                      type="text"
-                      placeholder="+971 50 000 0000"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="+971 50 000 0000"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full bg-[#111111] border border-white/25 rounded-xl py-4 px-4 text-base text-white focus:outline-none focus:border-[#FFD700] focus:bg-[#1a1a1a] transition-all placeholder:text-white/30 placeholder:text-base"
+                  />
                 </div>
               </form>
             </motion.div>
@@ -369,7 +357,7 @@ export default function CheckoutPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl"
+              className="bg-[#111111] border border-white/15 rounded-3xl p-8 shadow-2xl"
             >
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700]">
@@ -425,7 +413,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Sidebar Summary */}
-          <div className="lg:col-span-5">
+          <div style={{ minWidth: 0 }}>
             <div className="sticky top-32 space-y-6">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -482,7 +470,7 @@ export default function CheckoutPage() {
                       placeholder={t("promoCode")}
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value)}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#FFD700]/50 transition-all placeholder:text-white/20 uppercase font-black tracking-widest"
+                      className="flex-1 bg-[#111111] border border-white/25 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#FFD700] transition-all placeholder:text-white/30 uppercase font-black tracking-widest"
                     />
                     <button
                       onClick={handleApplyPromo}
@@ -531,31 +519,40 @@ export default function CheckoutPage() {
           isOpen={isPayPalOpen}
           onClose={() => setIsPayPalOpen(false)}
           amount={formatPrice(totalPrice)}
-          onSuccess={async () => {
+          onSuccess={async (captureDetails: PayPalCaptureDetails) => {
             setIsPayPalOpen(false);
             toast.success(lang === 'AR' ? "تم الدفع بنجاح!" : "Payment successful!");
             try {
-              // Order already saved as 'pending' before modal opened.
-              // Now update it to 'paid' using the stored pendingOrderId.
+              // Order was saved as 'pending' before modal opened.
+              // Now update it to 'paid' and store verified capture details.
               const orderId = pendingOrderId;
               if (!orderId) throw new Error("Missing pending order ID");
 
               await updateOrder({
                 id: orderId,
                 status: 'paid',
+                payment_details: {
+                  provider:        'paypal',
+                  capture_id:      captureDetails.captureID,
+                  paypal_order_id: captureDetails.paypalOrderID,
+                  payer_email:     captureDetails.payerEmail,
+                  payer_name:      captureDetails.payerName,
+                  captured_amount: captureDetails.capturedAmount,
+                  currency:        captureDetails.capturedCurrency,
+                  verified_server: true,
+                },
               } as any);
 
               if (user?.id) {
                 const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
 
-                // Send Email
                 await sendOrderConfirmationEmail({
-                  toEmail: formData.email,
-                  userName: formData.name,
-                  orderId: orderId,
+                  toEmail:     formData.email,
+                  userName:    formData.name,
+                  orderId:     orderId,
                   totalAmount: totalPrice.toString(),
-                  items: items,
-                  tickets: ticketCodes
+                  items:       items,
+                  tickets:     ticketCodes,
                 });
               }
 
@@ -564,7 +561,11 @@ export default function CheckoutPage() {
               clearCart();
               navigate("/");
             } catch (err) {
-              toast.error(lang === 'AR' ? "تم الدفع لكن فشل تحديث الطلب، تواصل مع الدعم" : "Payment received but order update failed. Please contact support.");
+              toast.error(
+                lang === 'AR'
+                  ? "تم الدفع لكن فشل تحديث الطلب، تواصل مع الدعم"
+                  : "Payment received but order update failed. Please contact support."
+              );
             }
           }}
         />

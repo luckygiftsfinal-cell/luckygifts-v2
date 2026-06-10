@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Lock, Zap, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
+
 import { useLanguage } from "../context/LanguageContext";
 
 export default function HeroSection() {
@@ -147,13 +147,33 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Shop Now Button — in the blue box area */}
-          <Link 
-            to="/store" 
-            className="bg-gold text-black py-4 px-8 sm:py-5 sm:px-12 text-lg sm:text-xl font-black rounded-2xl flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform whitespace-nowrap border-2 border-[#FFD700]"
-          >
-            {t("startShopping")} <ArrowRight size={22} />
-          </Link>
+          {/* Shop Now Button + Trust Badges */}
+          <div className="flex flex-col items-center gap-3">
+            <a 
+              href="https://storegetlucky.netlify.app/shop"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gold text-black py-4 px-8 sm:py-5 sm:px-12 text-lg sm:text-xl font-black rounded-2xl flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform whitespace-nowrap border-2 border-[#FFD700]"
+            >
+              {t("startShopping")} <ArrowRight size={22} />
+            </a>
+
+            {/* Trust Badges */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-1.5 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 backdrop-blur-sm">
+                <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" className="h-4 opacity-90" />
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-wider hidden sm:block">PayPal</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 backdrop-blur-sm">
+                <Lock size={13} className="text-green-400" />
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-wider">SSL Secured</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 backdrop-blur-sm">
+                <span className="text-sm">🇦🇪</span>
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-wider hidden sm:block">UAE</span>
+              </div>
+            </div>
+          </div>
 
         </div>
       </motion.div>

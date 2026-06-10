@@ -61,7 +61,7 @@ export default function HowItWorksPage() {
         zIndex: 0 
       }} />
 
-      <div className="container" style={{ position: "relative", zIndex: 1, paddingTop: 140 }}>
+      <div className="container-custom" style={{ position: "relative", zIndex: 1, paddingTop: 140 }}>
         <div style={{ textAlign: "center", marginBottom: 80 }}>
           <div className="tag" style={{ marginBottom: 20, color: "#FFD700", borderColor: "rgba(255,215,0,0.4)" }}>✦ THE GOLDEN PATH ✦</div>
           <h1 className="text-4xl md:text-6xl font-black text-center text-white mb-6 italic tracking-tighter" style={{ fontSize: "clamp(42px, 8vw, 72px)", marginBottom: 24 }}>How to Win</h1>

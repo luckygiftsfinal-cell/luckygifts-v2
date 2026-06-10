@@ -31,7 +31,6 @@ export default function Footer() {
   }, []);
 
   const exploreLinks = [
-    { to: "/store",       label: t("dreamStore") },
     { to: "/prizes",      label: t("prizes") },
     { to: "/winners",     label: t("winners") },
     { to: "/how-it-works",label: t("howItWorks") },

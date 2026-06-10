@@ -253,7 +253,6 @@ export default function Navigation() {
           {/* Desktop Navigation Links */}
           <div className={`hidden lg:flex items-center gap-8 border-t border-white/5 pt-5 pb-2 ${isRTL ? 'flex-row-reverse justify-start' : ''}`}>
             <Link to="/" className={getLinkClass("/")}>{t("home")}</Link>
-            <Link to="/store" className={getLinkClass("/store")}>{t("dreamStore")}</Link>
             <Link to="/vip" className={getLinkClass("/vip")}>
               <Crown size={16} className={pathname === "/vip" ? "text-[#FFD700]" : "text-[#FFD700]/70"} /> {t("vipMember")}
             </Link>
@@ -277,7 +276,6 @@ export default function Navigation() {
                 <div className="flex flex-col gap-4">
                   {[
                     { path: "/", label: t("home") },
-                    { path: "/store", label: t("dreamStore") },
                     { path: "/vip", label: t("vipMember"), icon: Crown },
                     { path: "/how-it-works", label: t("howItWorks") },
                     { path: "/prizes", label: t("prizes") },

@@ -144,7 +144,7 @@ export default function ProductDetailPage() {
 
       {/* Back bar */}
       <div style={{ position: "sticky", top: 72, zIndex: 80, background: "rgba(5,5,5,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "12px 0" }}>
-        <div className="container" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="container-custom" style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={() => navigate(-1)} style={{ display: "flex", alignItems: "center", gap: 8, color: "#FFD700", fontWeight: 800, fontSize: 13, letterSpacing: "0.08em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer", padding: "6px 0" }}>
             <ArrowLeft size={16} /> {lang === "AR" ? "رجوع" : "Back"}
           </button>

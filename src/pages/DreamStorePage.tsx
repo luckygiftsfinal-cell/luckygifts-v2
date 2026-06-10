@@ -173,7 +173,7 @@ export default function DreamStorePage() {
 
         {/* HERO */}
         <section style={{ padding: "40px 24px 30px" }}>
-          <div className="container" style={{ display: "flex", flexWrap: "wrap", gap: 48, alignItems: "center", justifyContent: "space-between" }}>
+          <div className="container-custom" style={{ display: "flex", flexWrap: "wrap", gap: 48, alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ flex: "1 1 480px", animation: "floatUp 0.7s ease both" }}>
               <div style={{ fontSize: "var(--text-xs)", fontWeight: 800, color: "#FFD700", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 20, opacity: 0.8 }}>✦ {t("premiumStore")} ✦</div>
               <h1 style={{ fontSize: "clamp(44px,7vw,80px)", fontWeight: 900, lineHeight: 1.02, letterSpacing: "-0.04em", marginBottom: 20 }}>
@@ -201,7 +201,7 @@ export default function DreamStorePage() {
 
         {/* CATEGORY TABS */}
         <div style={{ borderBottom: "1px solid rgba(255,255,255,.04)", background: "rgba(4,4,4,.9)", backdropFilter: "blur(24px)", position: "sticky", top: 72, zIndex: 90, padding: "14px 0" }}>
-          <div className="container" style={{ overflowX: "auto", display: "flex", gap: 10, alignItems: "center", scrollbarWidth: "none" }}>
+          <div className="container-custom" style={{ overflowX: "auto", display: "flex", gap: 10, alignItems: "center", scrollbarWidth: "none" }}>
             {categories.map(tab => {
               const isActive = activeTab === tab.key;
               const TabIcon = CATEGORY_ICONS[tab.key] || Tag;
@@ -216,7 +216,7 @@ export default function DreamStorePage() {
         </div>
 
         {/* PRODUCTS */}
-        <div className="container" style={{ padding: "40px 24px 80px" }}>
+        <div className="container-custom" style={{ padding: "40px 24px 80px" }}>
           <div style={{ textAlign: "center", marginBottom: 50 }}>
             <h2 className="text-gold" style={{ fontSize: "clamp(36px,6vw,64px)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 12 }}>
               {currentCat?.name}

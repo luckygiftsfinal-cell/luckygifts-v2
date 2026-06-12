@@ -153,9 +153,9 @@ export default function HeroSection() {
               href="https://storegetlucky.netlify.app/shop"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-gold text-black py-4 px-8 sm:py-5 sm:px-12 text-lg sm:text-xl font-black rounded-2xl flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform whitespace-nowrap border-2 border-[#FFD700]"
+              className="bg-gold text-black py-5 px-10 sm:py-7 sm:px-16 text-xl sm:text-3xl font-black rounded-2xl flex items-center justify-center gap-4 shadow-[0_0_60px_rgba(255,215,0,0.5)] hover:scale-110 transition-transform whitespace-nowrap border-3 border-[#FFD700]"
             >
-              {t("startShopping")} <ArrowRight size={22} />
+              {t("startShopping")} <ArrowRight size={28} />
             </a>
 
             {/* Trust Badges */}

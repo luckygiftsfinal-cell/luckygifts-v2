@@ -2,6 +2,7 @@ import HeroSection from "../sections/HeroSection";
 import HowItWorks from "../sections/HowItWorks";
 import PopularProducts from "../sections/PopularProducts";
 import Testimonials from "../sections/Testimonials";
+import ReadyToChange from "../sections/ReadyToChange";
 import { Shield, Zap, Award, Star } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import SEO from "../components/SEO";
@@ -18,7 +19,7 @@ export default function HomePage() {
         keywords="luxury prizes UAE, win prizes Dubai, lucky draw online, win car UAE, win cash prizes, prize draw"
       />
       <HeroSection />
-      
+
       {/* Animated Trust Bar */}
       <div className="bg-[#FFD700] py-3 overflow-hidden relative border-y border-[#E6B800]">
         <div className="flex whitespace-nowrap animate-ticker hover:[animation-play-state:paused]">
@@ -41,9 +42,32 @@ export default function HomePage() {
       </div>
 
       <HowItWorks />
-      
+
+      {/* Divider */}
+      <div className="bg-[#0a0a0f]">
+        <div className="container">
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+      </div>
+
       <PopularProducts />
-      
+
+      {/* Divider */}
+      <div className="bg-[#0a0a0f]">
+        <div className="container">
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+      </div>
+
+      <ReadyToChange />
+
+      {/* Divider */}
+      <div className="bg-[#0a0a0f]">
+        <div className="container">
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+      </div>
+
       <Testimonials />
     </div>
   );

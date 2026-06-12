@@ -28,17 +28,27 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="bg-[#050505] py-5 border-y border-white/5">
+    <section className="bg-[#050505] py-16 border-y border-white/5">
       <div className="container">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10">
+        {/* Section Title */}
+        <div className="text-center mb-12">
+          <span className="text-xs font-black text-[#FFD700] uppercase tracking-[0.4em] mb-4 block">
+            {isRTL ? "كيف يعمل" : "How It Works"}
+          </span>
+          <h2 className="text-3xl md:text-4xl font-black text-white">
+            {isRTL ? "خطوات بسيطة للفوز" : "Simple Steps to Win"}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, i) => (
-            <div key={i} className={`flex items-start gap-4 px-6 py-4 lg:py-2 group ${isRTL ? "flex-row-reverse text-right" : ""}`}>
-              <div className="w-9 h-9 flex-shrink-0 mt-0.5 border border-[#FFD700]/30 rounded-full flex items-center justify-center bg-black/40 group-hover:border-[#FFD700] transition-colors shadow-[0_0_15px_rgba(255,215,0,0.1)] group-hover:shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-                <step.icon size={15} className="text-[#FFD700]" />
+            <div key={i} className={`flex flex-col items-center text-center gap-4 p-6 group ${isRTL ? "flex-row-reverse text-right" : ""}`}>
+              <div className="w-14 h-14 flex-shrink-0 border border-[#FFD700]/30 rounded-full flex items-center justify-center bg-black/40 group-hover:border-[#FFD700] transition-colors shadow-[0_0_15px_rgba(255,215,0,0.1)] group-hover:shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                <step.icon size={22} className="text-[#FFD700]" />
               </div>
               <div>
-                <h3 className="text-white font-bold text-sm mb-1 tracking-wide leading-tight">{step.title}</h3>
-                <p className="text-white/50 text-xs leading-relaxed">{step.desc}</p>
+                <h3 className="text-white font-bold text-lg mb-2 tracking-wide leading-tight">{step.title}</h3>
+                <p className="text-white/50 text-sm leading-relaxed">{step.desc}</p>
               </div>
             </div>
           ))}

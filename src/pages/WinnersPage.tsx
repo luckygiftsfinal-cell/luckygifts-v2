@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Trophy, Star } from "lucide-react";
+import { Trophy, Star, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import SEO from "../components/SEO";
 
@@ -94,14 +94,30 @@ export default function WinnersPage() {
           </div>
         )}
 
-        {/* CTA */}
+        {/* CTA - External Link */}
         <div style={{ marginTop: 80, textAlign: "center", backgroundImage: "linear-gradient(rgba(10,10,10,.85),rgba(10,10,10,.85)),url('/images/hero-bg.png')", backgroundSize: "cover", padding: "80px 24px", borderRadius: 40, border: "1px solid rgba(255,215,0,.3)", position: "relative", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,.5)" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent,#FFD700,transparent)" }} />
           <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16, color: "white" }}>Will you be the next winner?</h2>
           <p style={{ color: "#fff", marginBottom: 32, fontWeight: "bold" }}>Your dream is just one ticket away. Join the next draw now.</p>
-          <Link to="/store" className="btn-primary" style={{ padding: "16px 48px", fontSize: 16 }}>
-            Get Your Tickets
-          </Link>
+          <motion.a
+            href="https://storegetlucky.netlify.app/shop"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-primary"
+            style={{ 
+              padding: "16px 48px", 
+              fontSize: 16,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              textDecoration: "none",
+              boxShadow: "0 0 30px rgba(255,215,0,0.3)"
+            }}
+          >
+            Get Your Tickets <ArrowRight size={20} />
+          </motion.a>
         </div>
       </div>
     </div>

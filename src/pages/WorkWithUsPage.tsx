@@ -71,7 +71,7 @@ export default function WorkWithUsPage() {
         <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-4">
           {lang === 'AR' ? "شكراً لاهتمامك!" : "Thank You For Your Interest!"}
         </h2>
-        <p className="text-white/40 mb-8 max-w-sm leading-relaxed">
+        <p className="text-white/60 mb-8 max-w-sm leading-relaxed text-lg">
           {lang === 'AR' 
             ? "لقد تلقينا طلبك وسيقوم فريقنا بمراجعته والتواصل معك قريباً." 
             : "We have received your application. Our team will review it and get back to you shortly."}
@@ -92,25 +92,27 @@ export default function WorkWithUsPage() {
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#FFD700]/5 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="w-full px-4 relative z-10">
+        {/* Header */}
         <div className="text-center mb-16 flex flex-col items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6"
           >
-            <Briefcase size={14} className="text-[#FFD700]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Careers at LuckyGifts</span>
+            <Briefcase size={16} className="text-[#FFD700]" />
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-white/60">Careers at LuckyGifts</span>
           </motion.div>
-          <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter italic mb-6 text-center">
+          <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic mb-6 text-center">
             {lang === 'AR' ? "انضم إلى فريقنا" : "Work With Us"}
           </h1>
-          <p className="text-white/40 text-lg max-w-2xl mx-auto leading-relaxed text-center">
+          <p className="text-white/60 text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed text-center">
             {lang === 'AR' 
               ? "هل أنت مستعد لتغيير قواعد اللعبة في عالم الفخامة؟ نحن نبحث دائماً عن المبدعين للانضمام إلى رحلتنا." 
               : "Ready to redefine luxury and winning? We're always looking for talented individuals to join our visionary team."}
           </p>
         </div>
 
+        {/* Form */}
         <div className="w-full flex justify-center">
           <div className="w-full max-w-5xl">
             <motion.div 
@@ -121,58 +123,58 @@ export default function WorkWithUsPage() {
               <form onSubmit={handleSubmit} className="space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-4">
-                    <label className="text-xs font-black text-white/40 uppercase tracking-widest ml-1">Full Name</label>
+                    <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Full Name</label>
                     <input 
                       type="text" 
                       placeholder="Your Name"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                   <div className="space-y-4">
-                    <label className="text-xs font-black text-white/40 uppercase tracking-widest ml-1">Email Address</label>
+                    <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Email Address</label>
                     <input 
                       type="email" 
                       placeholder="email@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-4">
-                    <label className="text-xs font-black text-white/40 uppercase tracking-widest ml-1">Phone Number</label>
+                    <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Phone Number</label>
                     <input 
                       type="tel" 
                       placeholder="+971 50 000 0000"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                   <div className="space-y-4">
-                    <label className="text-xs font-black text-white/40 uppercase tracking-widest ml-1">Position / Role</label>
+                    <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Position / Role</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Influencer, Developer..."
                       value={formData.position}
                       onChange={(e) => setFormData({...formData, position: e.target.value})}
-                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-xs font-black text-white/40 uppercase tracking-widest ml-1">Your Message / Experience</label>
+                  <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Your Message / Experience</label>
                   <textarea 
                     rows={6}
                     placeholder="Tell us about yourself and why you'd be a great fit..."
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors resize-none"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-6 px-6 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors resize-none"
                   />
                 </div>
 
@@ -199,10 +201,11 @@ export default function WorkWithUsPage() {
           <div className="w-full max-w-5xl h-px bg-white/10" />
         </div>
 
+        {/* Bottom Cards */}
         <div className="w-full flex justify-center">
           <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-[#12121a] border border-white/10 rounded-3xl p-10">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-8">Why Join Us?</h3>
+              <h3 className="text-3xl font-black text-white uppercase tracking-tight mb-8">Why Join Us?</h3>
               <ul className="space-y-8">
                 {[
                   { title: "Visionary Team", desc: "Work with the best in Dubai's luxury startup scene." },
@@ -210,12 +213,12 @@ export default function WorkWithUsPage() {
                   { title: "Innovation", desc: "Be part of the future of digital luxury commerce." }
                 ].map((item, i) => (
                   <li key={i} className="flex gap-5">
-                    <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700] shrink-0">
-                      <CheckCircle2 size={20} />
+                    <div className="w-12 h-12 rounded-lg bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700] shrink-0">
+                      <CheckCircle2 size={24} />
                     </div>
                     <div>
-                      <h4 className="text-base font-black text-white uppercase tracking-wider">{item.title}</h4>
-                      <p className="text-sm text-white/40 mt-1">{item.desc}</p>
+                      <h4 className="text-lg font-black text-white uppercase tracking-wider">{item.title}</h4>
+                      <p className="text-base text-white/60 mt-1">{item.desc}</p>
                     </div>
                   </li>
                 ))}
@@ -223,9 +226,12 @@ export default function WorkWithUsPage() {
             </div>
 
             <div className="bg-[#FFD700]/5 border border-[#FFD700]/20 rounded-3xl p-10">
-              <p className="text-sm text-[#FFD700] font-black uppercase tracking-widest mb-3">Direct Contact</p>
-              <p className="text-white/60 text-base leading-relaxed">
-                Have questions? Reach out to our HR department at careers@luckygifts.ae
+              <p className="text-base text-[#FFD700] font-black uppercase tracking-widest mb-3">Direct Contact</p>
+              <p className="text-white/70 text-lg leading-relaxed">
+                Have questions? Reach out to our HR department at{" "}
+                <a href="mailto:hr@getluckygifts.shop" className="text-[#FFD700] hover:underline">
+                  hr@getluckygifts.shop
+                </a>
               </p>
             </div>
           </div>

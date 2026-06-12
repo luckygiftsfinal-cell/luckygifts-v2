@@ -31,7 +31,7 @@ function FAQAccordion({ items }: { items: typeof FAQ_ITEMS }) {
             onClick={() => setOpen(open === i ? null : i)} 
             className="w-full py-6 flex items-center justify-between gap-4 text-left group"
           >
-            <span className="font-bold text-white text-base md:text-lg">{item.q}</span>
+            <span className="font-bold text-white text-xl md:text-2xl">{item.q}</span>
             <ChevronDown 
               size={20} 
               className={`text-[#FFD700] shrink-0 transition-transform duration-300 ${open === i ? "rotate-180" : ""}`} 
@@ -42,7 +42,7 @@ function FAQAccordion({ items }: { items: typeof FAQ_ITEMS }) {
             animate={{ height: open === i ? "auto" : 0, opacity: open === i ? 1 : 0 }}
             className="overflow-hidden"
           >
-            <p className="pb-6 text-white/60 text-sm md:text-base leading-relaxed">
+            <p className="pb-6 text-white/70 text-base md:text-lg leading-relaxed">
               {item.a}
             </p>
           </motion.div>
@@ -69,10 +69,10 @@ export default function FAQPage() {
             <HelpCircle size={14} className="text-[#FFD700]" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Help Center</span>
           </motion.div>
-          <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter italic mb-6 text-center">
+          <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter italic mb-6 text-center">
             FAQ
           </h1>
-          <p className="text-white/40 text-lg max-w-2xl mx-auto leading-relaxed text-center">
+          <p className="text-white/50 text-xl max-w-2xl mx-auto leading-relaxed text-center">
             Find answers to the most common questions about LuckyGifts.
           </p>
         </div>
@@ -90,8 +90,8 @@ export default function FAQPage() {
             {/* Contact CTA */}
             <div className="mt-12 text-center">
               <div className="bg-[#FFD700]/5 border border-[#FFD700]/20 rounded-3xl p-8 md:p-10">
-                <p className="text-white font-bold text-lg mb-4">Still have questions?</p>
-                <p className="text-white/40 text-sm mb-6">
+                <p className="text-white font-bold text-xl mb-4">Still have questions?</p>
+                <p className="text-white/50 text-base mb-6">
                   Our support team is ready to help you with any inquiries.
                 </p>
                 <Link 

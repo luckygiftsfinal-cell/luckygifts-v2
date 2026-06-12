@@ -69,7 +69,7 @@ export default function Navigation() {
       </div>
 
       <nav className={`fixed top-5 lg:top-6 left-0 right-0 z-[1001] transition-all duration-300 ${scrolled ? 'glass' : 'bg-[#0A0A0A]'}`}>
-        <div className="container py-2 lg:py-4">
+        <div className="container mx-auto px-4 py-2 lg:py-4">
           <div className="flex items-center gap-3 lg:gap-8 mb-2 lg:mb-6">
             <Link to="/" className={`flex-shrink-0 flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <img src="/images/logo.png" alt="Icon" className="h-8 lg:h-12 w-auto" />
@@ -272,7 +272,7 @@ export default function Navigation() {
               exit={{ height: 0, opacity: 0 }}
               className="lg:hidden border-t border-white/10 overflow-hidden bg-[#0A0A0A]"
             >
-              <div className="container py-8 space-y-6">
+              <div className="container mx-auto px-4 py-8 space-y-6">
                 <div className="flex flex-col gap-4">
                   {[
                     { path: "/", label: t("home") },

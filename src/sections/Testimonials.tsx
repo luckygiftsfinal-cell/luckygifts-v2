@@ -1,6 +1,9 @@
 import { Star, Quote } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Testimonials() {
+  const { isRTL } = useLanguage();
+
   const testimonials = [
     {
       id: 1,
@@ -54,10 +57,17 @@ export default function Testimonials() {
     <section className="py-24 relative bg-[#0a0a0a] overflow-hidden">
       <div className="container relative z-10 px-4">
         <div className="flex flex-col items-center mb-16">
-          <span className="text-xs font-black text-[#FFD700] uppercase tracking-[0.4em] mb-4 block text-center">Voices of Success</span>
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-4 text-center">What Our Lucky Winners Say</h2>
+          <span className="text-xs font-black text-[#FFD700] uppercase tracking-[0.4em] mb-4 block text-center">
+            {isRTL ? "أصوات النجاح" : "Voices of Success"}
+          </span>
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-4 text-center">
+            {isRTL ? "ماذا يقول فائزونا المحظوظون" : "What Our Lucky Winners Say"}
+          </h2>
           <p className="text-white/50 max-w-2xl font-medium leading-relaxed text-center">
-            Real people, real prizes, life-changing moments. Don't just take our word for it—listen to our winners.
+            {isRTL 
+              ? "أشخاص حقيقيون، جوائز حقيقية، لحظات تغير الحياة. لا تأخذ كلمتنا فحسب — استمع إلى فائزينا."
+              : "Real people, real prizes, life-changing moments. Don't just take our word for it—listen to our winners."
+            }
           </p>
         </div>
 

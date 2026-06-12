@@ -1,6 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { Diamond, Ticket, Trophy, Sparkles } from "lucide-react";
+import { Diamond, Ticket, Trophy, Sparkles, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import SEO from "../components/SEO";
 
 export default function HowItWorksPage() {
@@ -136,7 +136,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 style={{ fontSize: 26, fontWeight: 800, color: "#fff", marginBottom: 16, letterSpacing: "-0.01em" }}>{s.title}</h3>
                   <p style={{ color: "#FFFFFF", lineHeight: 1.8, fontSize: 17 }}>{s.desc}</p>
-                  
+
                   {/* Mobile Step Indicator */}
                   <div className="md:hidden" style={{ marginTop: 24, fontSize: 14, fontWeight: 900, color: s.color, letterSpacing: "0.1em" }}>
                     STEP {s.step}
@@ -147,10 +147,28 @@ export default function HowItWorksPage() {
           ))}
         </div>
 
+        {/* SHOP NOW BUTTON - External Link */}
         <div style={{ textAlign: "center", marginTop: 120, paddingBottom: 100 }}>
-          <Link to="/store" className="btn-primary" style={{ padding: "22px 70px", fontSize: 22, borderRadius: 100 }}>
-            Start Your Journey Now
-          </Link>
+          <motion.a
+            href="https://storegetlucky.netlify.app/shop"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-primary"
+            style={{ 
+              padding: "22px 70px", 
+              fontSize: 22, 
+              borderRadius: 100,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
+              textDecoration: "none",
+              boxShadow: "0 0 40px rgba(255,215,0,0.3)"
+            }}
+          >
+            Start Your Journey Now <ArrowRight size={24} />
+          </motion.a>
         </div>
       </div>
     </div>

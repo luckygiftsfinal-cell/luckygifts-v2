@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import SEO from "../components/SEO";
 
 const DEFAULT_PRIZES = [
@@ -110,34 +112,68 @@ export default function PrizesPage() {
         }}>
           {/* Immersive Overlay */}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,5,5,0.9) 0%, rgba(5,5,5,0.7) 50%, rgba(5,5,5,0.9) 100%)", zIndex: 0 }} />
-          
+
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ position: "absolute", top: -80, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #FFD700, transparent)" }} />
-          <span style={{ color: "#FFD700", fontWeight: 800, letterSpacing: "0.2em", fontSize: 13, textTransform: "uppercase", marginBottom: 16, display: "block" }}>GRAND PRIZE</span>
-          <h2 style={{ fontSize: "clamp(48px, 10vw, 96px)", fontWeight: 950, background: "linear-gradient(135deg, #fff 0%, #FFD700 50%, #8B6914 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 16px 0" }}>$1,000,000</h2>
-          <p style={{ fontSize: 20, color: "#f0ece4", fontWeight: 600, marginBottom: 40 }}>Win life-changing cash instantly.</p>
-          
-          {/* Promotional Stats Bar */}
-          <div style={{ display: "flex", gap: 32, justifyContent: "center", marginBottom: 48, flexWrap: "wrap", alignItems: "center" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, color: "#fff", lineHeight: 1 }}>250,000</div>
-              <div style={{ fontSize: 12, color: "#FFD700", fontWeight: 800, letterSpacing: "0.1em", marginTop: 8 }}>TOTAL TICKETS</div>
-            </div>
-            <div style={{ width: 1, height: 40, background: "rgba(255,215,0,0.3)", display: "block" }} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, color: "#fff", lineHeight: 1 }}>50,000</div>
-              <div style={{ fontSize: 12, color: "#FFD700", fontWeight: 800, letterSpacing: "0.1em", marginTop: 8 }}>TOTAL WINNERS</div>
-            </div>
-          </div>
-          
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            {[{ v: countdown.days, l: "DAYS" }, { v: countdown.hours, l: "HOURS" }, { v: countdown.minutes, l: "MINS" }, { v: countdown.seconds, l: "SECS" }].map(({ v, l }, i) => (
-              <div key={i} style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: 16, padding: "16px 20px", minWidth: 90 }}>
-                <div style={{ fontSize: 32, fontWeight: 900, color: "#FFD700" }}>{String(v).padStart(2, "0")}</div>
-                <div style={{ fontSize: 10, color: "#FFFFFF", fontWeight: 800, letterSpacing: "0.1em" }}>{l}</div>
+            <span style={{ color: "#FFD700", fontWeight: 800, letterSpacing: "0.2em", fontSize: 13, textTransform: "uppercase", marginBottom: 16, display: "block" }}>GRAND PRIZE</span>
+            <h2 style={{ fontSize: "clamp(48px, 10vw, 96px)", fontWeight: 950, background: "linear-gradient(135deg, #fff 0%, #FFD700 50%, #8B6914 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 16px 0" }}>$1,000,000</h2>
+            <p style={{ fontSize: 20, color: "#f0ece4", fontWeight: 600, marginBottom: 40 }}>Win life-changing cash instantly.</p>
+
+            {/* Promotional Stats Bar */}
+            <div style={{ display: "flex", gap: 32, justifyContent: "center", marginBottom: 48, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, color: "#fff", lineHeight: 1 }}>250,000</div>
+                <div style={{ fontSize: 12, color: "#FFD700", fontWeight: 800, letterSpacing: "0.1em", marginTop: 8 }}>TOTAL TICKETS</div>
               </div>
-            ))}
-          </div>
+              <div style={{ width: 1, height: 40, background: "rgba(255,215,0,0.3)", display: "block" }} />
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, color: "#fff", lineHeight: 1 }}>50,000</div>
+                <div style={{ fontSize: 12, color: "#FFD700", fontWeight: 800, letterSpacing: "0.1em", marginTop: 8 }}>TOTAL WINNERS</div>
+              </div>
+            </div>
+
+            {/* Countdown */}
+            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 48 }}>
+              {[{ v: countdown.days, l: "DAYS" }, { v: countdown.hours, l: "HOURS" }, { v: countdown.minutes, l: "MINS" }, { v: countdown.seconds, l: "SECS" }].map(({ v, l }, i) => (
+                <div key={i} style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: 16, padding: "16px 20px", minWidth: 90 }}>
+                  <div style={{ fontSize: 32, fontWeight: 900, color: "#FFD700" }}>{String(v).padStart(2, "0")}</div>
+                  <div style={{ fontSize: 10, color: "#FFFFFF", fontWeight: 800, letterSpacing: "0.1em" }}>{l}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* WIN NOW BUTTON */}
+            <motion.a
+              href="https://storegetlucky.netlify.app/shop"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 12,
+                background: "linear-gradient(135deg, #FFD700, #FFC107)",
+                color: "#000",
+                padding: "18px 56px",
+                borderRadius: 16,
+                fontSize: "clamp(18px, 3vw, 24px)",
+                fontWeight: 900,
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                textDecoration: "none",
+                boxShadow: "0 0 50px rgba(255,215,0,0.4), 0 10px 30px rgba(0,0,0,0.3)",
+                border: "2px solid #FFD700",
+                cursor: "pointer",
+              }}
+            >
+              WIN NOW <ArrowRight size={28} />
+            </motion.a>
+
+            {/* Sub text */}
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 16, fontWeight: 600 }}>
+              Every purchase automatically enters you into the draw
+            </p>
           </div>
         </div>
 
@@ -148,7 +184,7 @@ export default function PrizesPage() {
               <div style={{ height: 240, position: "relative", overflow: "hidden" }}>
                 <img src={card.img} alt={card.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #050505 0%, transparent 60%)" }} />
-                
+
                 {card.sponsor && (
                   <div style={{ 
                     position: "absolute", 

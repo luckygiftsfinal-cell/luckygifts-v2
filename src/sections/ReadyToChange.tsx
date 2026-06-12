@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 export default function ReadyToChange() {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-24 relative overflow-hidden bg-[#0a0a0a]">
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gold/10 blur-[120px] rounded-full" />
-      
+
       <div className="container relative z-10 text-center">
         <div className="mb-12">
           <span className="text-4xl mb-6 block">🎰</span>
@@ -16,14 +17,17 @@ export default function ReadyToChange() {
             Join 248,000+ members who shop, enter, and win every week.
           </p>
         </div>
-        
-        <motion.button 
+
+        <motion.a 
+          href="https://storegetlucky.netlify.app/shop"
+          target="_blank"
+          rel="noopener noreferrer"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="btn-primary py-5 px-16 text-xl rounded-full shadow-[0_0_50px_rgba(255,215,0,0.3)]"
+          className="btn-primary py-5 px-16 text-xl rounded-full shadow-[0_0_50px_rgba(255,215,0,0.3)] inline-flex items-center gap-3"
         >
-          View Active Prize Draws
-        </motion.button>
+          Shop Now <ArrowRight size={22} />
+        </motion.a>
       </div>
     </section>
   );

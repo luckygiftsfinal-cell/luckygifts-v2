@@ -1,15 +1,15 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 
 interface SEOProps {
-  title?: string;
+  title?:       string;
   description?: string;
-  keywords?: string;
-  image?: string;
-  url?: string;
-  type?: "website" | "product" | "article";
-  price?: string;
-  currency?: string;
-  noIndex?: boolean;
+  keywords?:    string;
+  image?:       string;
+  url?:         string;
+  type?:        "website" | "product" | "article";
+  price?:       string;
+  currency?:    string;
+  noIndex?:     boolean;
 }
 
 const SITE_NAME    = "LuckyGifts";
@@ -18,79 +18,54 @@ const DEFAULT_IMG  = `${DOMAIN}/images/og-default.jpg`;
 const DEFAULT_DESC = "Shop premium lifestyle products and automatically enter life-changing luxury prize draws — Rolex, iPhone, Cash, Cars & more. 250,000+ tickets sold.";
 const DEFAULT_KW   = "luxury prizes, win prizes UAE, lucky draw Dubai, win car UAE, win cash prizes, luxury gifts, prize draw online";
 
-function setMeta(property: string, content: string, attr = "name") {
-  const selector = `meta[${attr}="${property}"]`;
-  let el = document.querySelector<HTMLMetaElement>(selector);
-  if (!el) {
-    el = document.createElement("meta");
-    el.setAttribute(attr, property);
-    document.head.appendChild(el);
-  }
-  el.content = content;
-}
-
-function setLink(rel: string, href: string) {
-  let el = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
-  if (!el) {
-    el = document.createElement("link");
-    el.rel = rel;
-    document.head.appendChild(el);
-  }
-  el.href = href;
-}
-
 export default function SEO({
   title,
   description = DEFAULT_DESC,
   keywords    = DEFAULT_KW,
   image       = DEFAULT_IMG,
-  url,
+  url         = "",
   type        = "website",
   price,
   currency    = "USD",
   noIndex     = false,
 }: SEOProps) {
-  const fullTitle   = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Shop Now & Win Big`;
-  const canonicalUrl = url ? `${DOMAIN}${url}` : DOMAIN;
-  const ogImage     = image.startsWith("http") ? image : `${DOMAIN}${image}`;
+  const fullTitle    = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Shop Now & Win Big`;
+  const canonicalUrl = `${DOMAIN}${url}`;
+  const ogImage      = image.startsWith("http") ? image : `${DOMAIN}${image}`;
 
-  useEffect(() => {
-    // Title
-    document.title = fullTitle;
+  return (
+    <Helmet>
+      <title>{fullTitle}</title>
 
-    // Basic meta
-    setMeta("description",              description);
-    setMeta("keywords",                 keywords);
-    setMeta("author",                   SITE_NAME);
-    setMeta("robots",                   noIndex ? "noindex, nofollow" : "index, follow");
+      <meta name="description"  content={description} />
+      <meta name="keywords"     content={keywords} />
+      <meta name="author"       content={SITE_NAME} />
+      <meta name="robots"       content={noIndex ? "noindex, nofollow" : "index, follow"} />
 
-    // Open Graph
-    setMeta("og:type",                  type,          "property");
-    setMeta("og:site_name",             SITE_NAME,     "property");
-    setMeta("og:title",                 fullTitle,     "property");
-    setMeta("og:description",           description,   "property");
-    setMeta("og:image",                 ogImage,       "property");
-    setMeta("og:image:width",           "1200",        "property");
-    setMeta("og:image:height",          "630",         "property");
-    setMeta("og:url",                   canonicalUrl,  "property");
-    setMeta("og:locale",                "en_US",       "property");
+      <meta property="og:type"         content={type} />
+      <meta property="og:site_name"    content={SITE_NAME} />
+      <meta property="og:title"        content={fullTitle} />
+      <meta property="og:description"  content={description} />
+      <meta property="og:image"        content={ogImage} />
+      <meta property="og:image:width"  content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:url"          content={canonicalUrl} />
+      <meta property="og:locale"       content="en_US" />
 
-    // Twitter Card
-    setMeta("twitter:card",             "summary_large_image");
-    setMeta("twitter:site",             "@LuckyGifts");
-    setMeta("twitter:title",            fullTitle);
-    setMeta("twitter:description",      description);
-    setMeta("twitter:image",            ogImage);
+      <meta name="twitter:card"        content="summary_large_image" />
+      <meta name="twitter:site"        content="@LuckyGifts" />
+      <meta name="twitter:title"       content={fullTitle} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image"       content={ogImage} />
 
-    // Product-specific OG tags
-    if (type === "product" && price) {
-      setMeta("product:price:amount",   price,    "property");
-      setMeta("product:price:currency", currency, "property");
-    }
+      {type === "product" && price && (
+        <>
+          <meta property="product:price:amount"   content={price} />
+          <meta property="product:price:currency" content={currency} />
+        </>
+      )}
 
-    // Canonical
-    setLink("canonical", canonicalUrl);
-  }, [fullTitle, description, keywords, ogImage, canonicalUrl, type, price, currency, noIndex]);
-
-  return null;
+      <link rel="canonical" href={canonicalUrl} />
+    </Helmet>
+  );
 }

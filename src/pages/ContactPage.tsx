@@ -65,7 +65,7 @@ export default function ContactPage() {
         <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-4">
           {lang === 'AR' ? "وصلت رسالتك!" : "Message Received!"}
         </h2>
-        <p className="text-white/40 mb-8 max-w-sm leading-relaxed">
+        <p className="text-white/60 mb-8 max-w-sm leading-relaxed text-lg">
           {lang === 'AR' 
             ? "شكراً لتواصلك معنا. سيقوم فريق الدعم لدينا بالرد عليك في أقرب وقت ممكن." 
             : "Thank you for contacting us. Our support team will get back to you as soon as possible."}
@@ -87,27 +87,27 @@ export default function ContactPage() {
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#FFD700]/5 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="w-full px-4 relative z-10">
-        {/* Header - PERFECTLY CENTERED */}
+        {/* Header */}
         <div className="text-center mb-16 flex flex-col items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6"
           >
-            <HelpCircle size={14} className="text-[#FFD700]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Support Center</span>
+            <HelpCircle size={16} className="text-[#FFD700]" />
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-white/60">Support Center</span>
           </motion.div>
-          <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter italic mb-6 text-center">
+          <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic mb-6 text-center">
             {t('contactUs')}
           </h1>
-          <p className="text-white/40 text-lg max-w-2xl mx-auto leading-relaxed text-center">
+          <p className="text-white/60 text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed text-center">
             {lang === 'AR' 
               ? "هل لديك استفسار أو تحتاج إلى مساعدة؟ فريقنا متواجد دائماً لخدمتك." 
               : "Have a question or need assistance? Our team is always here to help you."}
           </p>
         </div>
 
-        {/* Form - CENTERED */}
+        {/* Form */}
         <div className="w-full flex justify-center">
           <div className="w-full max-w-2xl">
             <motion.div 
@@ -117,72 +117,72 @@ export default function ContactPage() {
             >
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Full Name</label>
+                  <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Full Name</label>
                   <input 
                     type="text" 
                     placeholder="Your Name"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-sm text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Email Address</label>
+                    <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Email Address</label>
                     <input 
                       type="email" 
                       placeholder="email@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-sm text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Phone Number</label>
+                    <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Phone Number</label>
                     <input 
                       type="tel" 
                       placeholder="+971 50 000 0000"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-sm text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Subject</label>
+                  <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Subject</label>
                   <input 
                     type="text" 
                     placeholder="What is this about?"
                     value={formData.subject}
                     onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-sm text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors"
                   />
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Message</label>
+                  <label className="text-sm font-black text-white/60 uppercase tracking-widest ml-1">Message</label>
                   <textarea 
                     rows={4}
                     placeholder="How can we help you?"
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-sm text-white placeholder:text-white/15 focus:outline-none focus:border-[#FFD700] transition-colors resize-none"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl py-5 px-5 text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFD700] transition-colors resize-none"
                   />
                 </div>
 
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-5 bg-[#FFD700] text-black font-black uppercase tracking-widest text-sm rounded-2xl flex items-center justify-center gap-3 hover:bg-[#f0d060] transition-all group disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_20px_50px_rgba(255,215,0,0.15)]"
+                  className="w-full py-5 bg-[#FFD700] text-black font-black uppercase tracking-widest text-base rounded-2xl flex items-center justify-center gap-3 hover:bg-[#f0d060] transition-all group disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_20px_50px_rgba(255,215,0,0.15)]"
                 >
                   {isSubmitting ? (
                     <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
                       Send Message
-                      <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>

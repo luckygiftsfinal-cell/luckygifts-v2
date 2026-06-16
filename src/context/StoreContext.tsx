@@ -76,11 +76,14 @@ export interface VIPPackage {
   id: string;
   name: string;
   price: number;
-  entries: number;
-  eventTicketsLabel: string;
-  iconName: string;
+  period: string;
   features: string[];
+  color: string;
+  icon: string;
   popular: boolean;
+  active: boolean;
+  event_label: string;
+  tickets_count: number;
 }
 
 interface StoreContextType {
@@ -164,7 +167,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           mainImage: p.main_image,
           subImages: p.sub_images || [],
           lemonVariantId: p.lemon_variant_id,
-          isHot: p.is_hot
+          isHot: p.is_hot,
+          isPopular: p.is_popular,
         }));
         setProducts(mappedProducts);
       }
@@ -182,11 +186,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           id: p.id,
           name: p.name,
           price: p.price,
-          entries: parseInt(p.features?.find((f: string) => f.includes('entries'))?.match(/\d+/)?.[0] || '0'),
-          eventTicketsLabel: p.features?.find((f: string) => f.toLowerCase().includes('event')) || 'VIP Event Access',
-          iconName: p.icon || 'Star',
+          period: p.period || 'one-time',
           features: p.features || [],
-          popular: p.popular || false
+          color: p.color || '#FFD700',
+          icon: p.icon || 'Star',
+          popular: p.popular || false,
+          active: p.active !== false,
+          event_label: p.event_label || 'VIP Event Access',
+          tickets_count: p.tickets_count || 0,
         }));
         setVipPackages(mappedVip);
       }
@@ -289,6 +296,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       sub_images: product.subImages || [],
       category_key: product.category || product.prize || "Cash",
       is_hot: product.isHot || false,
+      is_popular: product.isPopular || false,
     };
     if (product.lemonVariantId) dbProduct.lemon_variant_id = product.lemonVariantId;
     const { data, error } = await supabase.from('products').insert([dbProduct]).select();
@@ -309,6 +317,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       sub_images: product.subImages || [],
       category_key: product.category,
       is_hot: product.isHot || false,
+      is_popular: product.isPopular || false,
     };
     if (product.lemonVariantId) dbProduct.lemon_variant_id = product.lemonVariantId;
     const { error } = await supabase.from('products').update(dbProduct).eq('id', product.id);

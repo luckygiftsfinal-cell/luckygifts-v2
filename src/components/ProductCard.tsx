@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { ShoppingCart, Check } from "lucide-react";
+import { useCart } from "../context/CartContext";
 
 export interface ProductCardProduct {
   id: string;
@@ -35,7 +37,8 @@ export default function ProductCard({
   setModalOpen,
 }: ProductCardProps) {
   const [hovered, setHovered] = useState(false);
-  const navigate = useNavigate();
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
 
   const price    = parseFloat(p.price || "0");
   const oldPrice = parseFloat(p.originalPrice || "0");
@@ -46,18 +49,21 @@ export default function ProductCard({
   const badgeSize = variant === "popular" ? "pc__ticket-badge--sm" : "pc__ticket-badge--lg";
   const countClass = variant === "popular" ? "pc__ticket-count-sm" : "pc__ticket-count-lg";
 
-  const handleBuyNow = (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated && setModalOpen) {
       setModalOpen(true);
       return;
     }
-    navigate(`/store/product/${p.id}`);
+    addItem(p as any);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   const offLabel = lang === "AR" ? "خصم" : "OFF";
-  const buyLabel = lang === "AR" ? "اشتر الآن" : "Buy Now";
+  const cartLabel = lang === "AR" ? "أضف للسلة" : "Add to Cart";
+  const addedLabel = lang === "AR" ? "تمت الإضافة!" : "Added!";
 
   return (
     <Link to={`/store/product/${p.id}`} style={{ textDecoration: "none", display: "block" }}>
@@ -134,8 +140,15 @@ export default function ProductCard({
           </div>
 
           {/* CTA */}
-          <button className="pc__btn" onClick={handleBuyNow}>
-            {buyLabel}
+          <button
+            className="pc__btn"
+            onClick={handleAddToCart}
+            style={added ? { background: "linear-gradient(135deg,#22c55e,#16a34a)", transition: "background 0.3s" } : {}}
+          >
+            {added
+              ? <><Check size={16} /> {addedLabel}</>
+              : <><ShoppingCart size={16} /> {cartLabel}</>
+            }
           </button>
         </div>
       </div>

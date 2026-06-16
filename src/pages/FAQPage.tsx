@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { HelpCircle, ChevronDown, Mail } from "lucide-react";
@@ -52,12 +52,249 @@ function FAQAccordion({ items }: { items: typeof FAQ_ITEMS }) {
   );
 }
 
+function GiftBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    let animId: number;
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const W = () => canvas.width;
+    const H = () => canvas.height;
+    const fov = 500;
+
+    // Particles
+    const particles = Array.from({ length: 120 }, () => ({
+      x: Math.random() * 1400,
+      y: Math.random() * 800,
+      z: Math.random() * 600 + 50,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.2,
+      r: Math.random() * 3 + 1,
+      gold: Math.random() > 0.4,
+    }));
+
+    // Ribbons
+    class Ribbon {
+      pts: { x: number; y: number }[] = [];
+      x = Math.random() * 1400;
+      y = -50;
+      z = Math.random() * 400 + 100;
+      vx = (Math.random() - 0.5) * 1.5;
+      vy = Math.random() * 1.5 + 0.5;
+      wave = Math.random() * Math.PI * 2;
+      len = 18 + Math.floor(Math.random() * 12);
+      gold = Math.random() > 0.3;
+
+      reset() {
+        this.pts = [];
+        this.x = Math.random() * 1400;
+        this.y = -50;
+        this.z = Math.random() * 400 + 100;
+        this.vx = (Math.random() - 0.5) * 1.5;
+        this.vy = Math.random() * 1.5 + 0.5;
+        this.wave = Math.random() * Math.PI * 2;
+        this.len = 18 + Math.floor(Math.random() * 12);
+        this.gold = Math.random() > 0.3;
+      }
+
+      update() {
+        this.wave += 0.06;
+        this.x += this.vx + Math.sin(this.wave) * 1.2;
+        this.y += this.vy;
+        this.pts.unshift({ x: this.x, y: this.y });
+        if (this.pts.length > this.len) this.pts.pop();
+        if (this.y > H() + 60) this.reset();
+      }
+
+      draw() {
+        if (this.pts.length < 2) return;
+        const scale = fov / (fov + this.z);
+        const cx = W() / 2, cy = H() / 2;
+        ctx.beginPath();
+        this.pts.forEach((p, i) => {
+          const sx = cx + (p.x - cx) * scale;
+          const sy = cy + (p.y - cy) * scale;
+          i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+        });
+        const alpha = scale * 0.85 * (1 - this.pts.length / (this.len * 1.5));
+        ctx.strokeStyle = this.gold
+          ? `rgba(255,210,0,${alpha + 0.1})`
+          : `rgba(220,220,255,${alpha * 0.7})`;
+        ctx.lineWidth = scale * 2.5;
+        ctx.lineCap = "round";
+        ctx.stroke();
+      }
+    }
+
+    const ribbons = Array.from({ length: 14 }, () => {
+      const r = new Ribbon();
+      r.y = Math.random() * H();
+      return r;
+    });
+
+    // Gift boxes
+    class GiftBox {
+      x = (Math.random() - 0.5) * 1200;
+      y = (Math.random() - 0.5) * 800;
+      z = Math.random() * 500 + 80;
+      vx = (Math.random() - 0.5) * 0.6;
+      vy = (Math.random() - 0.5) * 0.4;
+      vz = (Math.random() - 0.5) * 0.5;
+      rot = Math.random() * Math.PI * 2;
+      vrot = (Math.random() - 0.5) * 0.018;
+      size = 28 + Math.random() * 40;
+      gold = Math.random() > 0.4;
+
+      update() {
+        this.x += this.vx; this.y += this.vy; this.z += this.vz;
+        this.rot += this.vrot;
+        if (this.z < 50 || this.z > 700) this.vz *= -1;
+        if (Math.abs(this.x) > 900) this.vx *= -1;
+        if (Math.abs(this.y) > 600) this.vy *= -1;
+      }
+
+      draw() {
+        const cx = W() / 2, cy = H() / 2;
+        const scale = fov / (fov + this.z);
+        const sx = cx + this.x * scale;
+        const sy = cy + this.y * scale;
+        const s = this.size * scale;
+        const alpha = Math.min(1, scale * 1.2);
+        if (alpha < 0.05) return;
+
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(this.rot);
+
+        if (this.gold) {
+          ctx.fillStyle = `rgba(200,140,0,${alpha})`;
+          ctx.fillRect(-s / 2, -s / 2, s, s);
+          ctx.fillStyle = `rgba(255,200,50,${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(-s / 2, -s / 2);
+          ctx.lineTo(-s / 2 + s * 0.25, -s / 2 - s * 0.2);
+          ctx.lineTo(s / 2 + s * 0.25, -s / 2 - s * 0.2);
+          ctx.lineTo(s / 2, -s / 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = `rgba(160,100,0,${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(s / 2, -s / 2);
+          ctx.lineTo(s / 2 + s * 0.25, -s / 2 - s * 0.2);
+          ctx.lineTo(s / 2 + s * 0.25, s / 2 - s * 0.2);
+          ctx.lineTo(s / 2, s / 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = `rgba(255,255,255,${alpha * 0.9})`;
+          ctx.fillRect(-s / 2, -s * 0.08, s, s * 0.16);
+          ctx.fillRect(-s * 0.08, -s / 2, s * 0.16, s);
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.beginPath(); ctx.ellipse(-s * 0.18, -s * 0.18, s * 0.15, s * 0.09, -0.7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(s * 0.18, -s * 0.18, s * 0.15, s * 0.09, 0.7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(0, -s * 0.08, s * 0.08, 0, Math.PI * 2); ctx.fill();
+        } else {
+          ctx.fillStyle = `rgba(220,225,240,${alpha})`;
+          ctx.fillRect(-s / 2, -s / 2, s, s);
+          ctx.fillStyle = `rgba(240,245,255,${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(-s / 2, -s / 2);
+          ctx.lineTo(-s / 2 + s * 0.25, -s / 2 - s * 0.2);
+          ctx.lineTo(s / 2 + s * 0.25, -s / 2 - s * 0.2);
+          ctx.lineTo(s / 2, -s / 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = `rgba(180,185,205,${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(s / 2, -s / 2);
+          ctx.lineTo(s / 2 + s * 0.25, -s / 2 - s * 0.2);
+          ctx.lineTo(s / 2 + s * 0.25, s / 2 - s * 0.2);
+          ctx.lineTo(s / 2, s / 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = `rgba(220,170,0,${alpha * 0.9})`;
+          ctx.fillRect(-s / 2, -s * 0.08, s, s * 0.16);
+          ctx.fillRect(-s * 0.08, -s / 2, s * 0.16, s);
+          ctx.fillStyle = `rgba(220,170,0,${alpha})`;
+          ctx.beginPath(); ctx.ellipse(-s * 0.18, -s * 0.18, s * 0.15, s * 0.09, -0.7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(s * 0.18, -s * 0.18, s * 0.15, s * 0.09, 0.7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(0, -s * 0.08, s * 0.08, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    const boxes = Array.from({ length: 12 }, () => new GiftBox());
+
+    const frame = () => {
+      const w = W(), h = H(), cx = w / 2, cy = h / 2;
+
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.8);
+      bg.addColorStop(0, "#0d1530");
+      bg.addColorStop(0.5, "#08102a");
+      bg.addColorStop(1, "#040810");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      boxes.sort((a, b) => b.z - a.z);
+      boxes.forEach(b => { b.update(); b.draw(); });
+      ribbons.forEach(r => { r.update(); r.draw(); });
+
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = 1400; if (p.x > 1400) p.x = 0;
+        if (p.y < 0) p.y = 800; if (p.y > 800) p.y = 0;
+        const scale = fov / (fov + p.z);
+        const sx = cx + (p.x - cx) * scale;
+        const sy = cy + (p.y - cy) * scale;
+        const sr = p.r * scale;
+        const alpha = scale * 0.9;
+        ctx.beginPath();
+        ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+        ctx.fillStyle = p.gold ? `rgba(255,210,0,${alpha})` : `rgba(200,210,255,${alpha * 0.6})`;
+        ctx.fill();
+      });
+
+      // Vignette
+      const vig = ctx.createRadialGradient(cx, cy, h * 0.3, cx, cy, h * 0.85);
+      vig.addColorStop(0, "rgba(0,0,0,0)");
+      vig.addColorStop(1, "rgba(0,0,10,0.7)");
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, w, h);
+
+      animId = requestAnimationFrame(frame);
+    };
+    frame();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full"
+      style={{ display: "block", zIndex: 0 }}
+    />
+  );
+}
+
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f0ece4] font-['Outfit'] pt-32 pb-20 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#FFD700]/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#FFD700]/5 blur-[100px] rounded-full pointer-events-none" />
+    <div className="min-h-screen text-[#f0ece4] font-['Outfit'] pb-20 relative overflow-hidden" style={{ paddingTop: "200px" }}>
+      {/* Animated 3D Background */}
+      <GiftBackground />
 
       <div className="w-full px-4 relative z-10">
         <div className="text-center mb-16 flex flex-col items-center justify-center">

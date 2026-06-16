@@ -21,6 +21,7 @@
         "npm:framer-motion@12",
         "npm:lucide-react@0.460",
         "npm:react-dom@19",
+        "npm:react-helmet-async@3",
         "npm:react-router-dom@7",
         "npm:react@19",
         "npm:recharts@^3.8.1",

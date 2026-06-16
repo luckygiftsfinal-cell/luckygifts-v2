@@ -15,7 +15,8 @@ import {
   Search,
   ChevronRight,
   Tag,
-  Briefcase
+  Briefcase,
+  Calendar
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -26,6 +27,7 @@ const sidebarItems = [
   { path: "/admin/orders", icon: ShoppingCart, label: "Orders" },
   { path: "/admin/users", icon: Users, label: "VIP Users" },
   { path: "/admin/vip-packages", icon: Crown, label: "VIP Packages" },
+  { path: "/admin/events", icon: Calendar, label: "Events" },
   { path: "/admin/winners", icon: Trophy, label: "Winners" },
   { path: "/admin/promo-codes", icon: Tag, label: "Promo & Referrals" },
   { path: "/admin/applications", icon: Briefcase, label: "Applications", badge: true },

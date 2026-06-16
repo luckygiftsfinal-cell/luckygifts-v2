@@ -21,8 +21,10 @@ interface AuthContextType {
   addTickets: (count: number) => void;
   isModalOpen: boolean;
   setModalOpen: (open: boolean) => void;
+  mode: "login" | "register";
+  setMode: (mode: "login" | "register") => void;
   login: (email: string, password?: string) => Promise<boolean>;
-  register: (name: string, email: string, phone: string, password?: string) => Promise<boolean>;
+  register: (name: string, email: string, phone: string, password?: string, country?: string) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -32,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [earnedTickets, setEarnedTickets] = useState(() => {
     const saved = localStorage.getItem('earned_tickets');
     return saved ? parseInt(saved) : 0;
@@ -209,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, phone: string, password?: string): Promise<boolean> => {
+  const register = async (name: string, email: string, phone: string, password?: string, country?: string): Promise<boolean> => {
     setIsLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -238,6 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: data.user.id,
           full_name: name,
           phone: phone,
+          country: country || "AE",
           role: role,
           vip_level: "None"
         }
@@ -275,6 +279,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         addTickets,
         isModalOpen,
         setModalOpen,
+        mode,
+        setMode,
         login,
         register,
         logout

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function ReadyToChange() {
   return (
@@ -18,16 +19,18 @@ export default function ReadyToChange() {
           </p>
         </div>
 
-        <motion.a 
-          href="https://storegetlucky.netlify.app/shop"
-          target="_blank"
-          rel="noopener noreferrer"
+        <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="btn-primary py-5 px-16 text-xl rounded-full shadow-[0_0_50px_rgba(255,215,0,0.3)] inline-flex items-center gap-3"
+          className="inline-flex"
         >
-          Shop Now <ArrowRight size={22} />
-        </motion.a>
+          <Link
+            to="/store"
+            className="btn-primary py-5 px-16 text-xl rounded-full shadow-[0_0_50px_rgba(255,215,0,0.3)] inline-flex items-center gap-3"
+          >
+            Shop Now <ArrowRight size={22} />
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

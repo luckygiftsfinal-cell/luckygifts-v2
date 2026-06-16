@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import SEO from "../components/SEO";
 
 const DEFAULT_PRIZES = [
@@ -143,32 +144,30 @@ export default function PrizesPage() {
             </div>
 
             {/* WIN NOW BUTTON */}
-            <motion.a
-              href="https://storegetlucky.netlify.app/shop"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 12,
-                background: "linear-gradient(135deg, #FFD700, #FFC107)",
-                color: "#000",
-                padding: "18px 56px",
-                borderRadius: 16,
-                fontSize: "clamp(18px, 3vw, 24px)",
-                fontWeight: 900,
-                textTransform: "uppercase",
-                letterSpacing: "0.15em",
-                textDecoration: "none",
-                boxShadow: "0 0 50px rgba(255,215,0,0.4), 0 10px 30px rgba(0,0,0,0.3)",
-                border: "2px solid #FFD700",
-                cursor: "pointer",
-              }}
-            >
-              WIN NOW <ArrowRight size={28} />
-            </motion.a>
+            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }} style={{ display: "inline-block" }}>
+              <Link
+                to="/store"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 12,
+                  background: "linear-gradient(135deg, #FFD700, #FFC107)",
+                  color: "#000",
+                  padding: "18px 56px",
+                  borderRadius: 16,
+                  fontSize: "clamp(18px, 3vw, 24px)",
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.15em",
+                  textDecoration: "none",
+                  boxShadow: "0 0 50px rgba(255,215,0,0.4), 0 10px 30px rgba(0,0,0,0.3)",
+                  border: "2px solid #FFD700",
+                  cursor: "pointer",
+                }}
+              >
+                WIN NOW <ArrowRight size={28} />
+              </Link>
+            </motion.div>
 
             {/* Sub text */}
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 16, fontWeight: 600 }}>

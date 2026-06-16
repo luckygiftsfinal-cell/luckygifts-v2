@@ -80,6 +80,18 @@ export default function CheckoutPage() {
     address: "",
     phone: ""
   });
+
+  // ✅ Pre-fill form with user data if authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+      }));
+    }
+  }, [isAuthenticated, user]);
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const { addOrder, updateOrder, issueTickets, validatePromoCode } = useStore();
@@ -170,6 +182,13 @@ export default function CheckoutPage() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ✅ Check if user is authenticated
+    if (!isAuthenticated) {
+      setModalOpen(true);
+      toast.info(lang === 'AR' ? "يرجى تسجيل الدخول لإتمام عملية الشراء" : "Please sign in to complete your purchase");
+      return;
+    }
 
     // Validation
     if (!formData.name || !formData.email || !formData.address || !formData.phone) {

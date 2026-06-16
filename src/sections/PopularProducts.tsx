@@ -1,139 +1,143 @@
-import { useState, useEffect } from "react";
-import { useLanguage } from "../context/LanguageContext";
-import { ArrowRight } from "lucide-react";
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { Flame, Star, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
+import { useCurrency } from "../context/CurrencyContext";
+import { useStore } from "../context/StoreContext";
+import { useAuth } from "../context/AuthContext";
+import ProductCard from "../components/ProductCard";
+
+type Tab = "hot" | "popular";
 
 export default function PopularProducts() {
   const { t, isRTL } = useLanguage();
+  const { formatPrice } = useCurrency();
+  const { products, loading } = useStore();
+  const { isAuthenticated, setModalOpen } = useAuth();
+  const [activeTab, setActiveTab] = useState<Tab>("hot");
 
-  const targetDate = new Date("2026-12-31T00:00:00").getTime();
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const hotProducts     = products.filter(p => p.isHot);
+  const popularProducts = products.filter(p => p.isPopular);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = targetDate - now;
-      if (distance < 0) { clearInterval(timer); return; }
-      setCountdown({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((distance % (1000 * 60)) / 1000),
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const displayed = activeTab === "hot" ? hotProducts : popularProducts;
+
+  // لا نعرض القسم إذا ما في منتجات في كلا القائمتين
+  if (!loading && hotProducts.length === 0 && popularProducts.length === 0) return null;
 
   return (
-    <section className="py-24 relative bg-[#050505]">
+    <section className="py-20 bg-[#050505] relative overflow-hidden">
+      {/* خلفية ديكورية */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#FFD700]/5 blur-[120px] rounded-full" />
+      </div>
+
       <div className="container relative z-10 px-4">
 
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <span className="font-black text-[#FFD700] uppercase tracking-[0.4em] mb-4 block text-xs">
-            {isRTL ? "الجائزة الكبرى" : "Grand Prize"}
-          </span>
-          <h2 className="text-4xl md:text-5xl font-black text-white">
-            {isRTL ? "اربح 1,000,000 دولار" : "Win $1,000,000"}
-          </h2>
-        </div>
-
-        {/* Featured Grand Prize Card */}
-        <div style={{
-          backgroundImage: "url('/images/hero-bg.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          border: "1px solid rgba(255,215,0,0.4)",
-          borderRadius: 32,
-          padding: "80px 40px",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
-          boxShadow: "0 30px 60px rgba(0,0,0,0.6)",
-          maxWidth: 900,
-          margin: "0 auto"
-        }}>
-          {/* Overlay */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,5,5,0.9) 0%, rgba(5,5,5,0.7) 50%, rgba(5,5,5,0.9) 100%)", zIndex: 0 }} />
-
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ position: "absolute", top: -80, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #FFD700, transparent)" }} />
-
-            <span style={{ color: "#FFD700", fontWeight: 800, letterSpacing: "0.2em", fontSize: 13, textTransform: "uppercase", marginBottom: 16, display: "block" }}>
-              {isRTL ? "الجائزة الكبرى" : "GRAND PRIZE"}
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
+          <div>
+            <span className="text-[#FFD700] font-black uppercase tracking-[0.4em] text-xs block mb-3">
+              ✦ {isRTL ? "منتجات مختارة" : "Curated Products"}
             </span>
-
-            <h2 style={{ fontSize: "clamp(48px, 10vw, 96px)", fontWeight: 950, background: "linear-gradient(135deg, #fff 0%, #FFD700 50%, #8B6914 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 16px 0" }}>
-              $1,000,000
+            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+              {isRTL ? "الأكثر طلباً" : "Top Picks"}
             </h2>
+          </div>
 
-            <p style={{ fontSize: 20, color: "#f0ece4", fontWeight: 600, marginBottom: 40 }}>
-              {isRTL ? "اربح نقوداً تغير حياتك فوراً." : "Win life-changing cash instantly."}
-            </p>
-
-            {/* Stats */}
-            <div style={{ display: "flex", gap: 32, justifyContent: "center", marginBottom: 48, flexWrap: "wrap", alignItems: "center" }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, color: "#fff", lineHeight: 1 }}>250,000</div>
-                <div style={{ fontSize: 12, color: "#FFD700", fontWeight: 800, letterSpacing: "0.1em", marginTop: 8 }}>{isRTL ? "إجمالي التذاكر" : "TOTAL TICKETS"}</div>
-              </div>
-              <div style={{ width: 1, height: 40, background: "rgba(255,215,0,0.3)" }} />
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 900, color: "#fff", lineHeight: 1 }}>50,000</div>
-                <div style={{ fontSize: 12, color: "#FFD700", fontWeight: 800, letterSpacing: "0.1em", marginTop: 8 }}>{isRTL ? "إجمالي الفائزين" : "TOTAL WINNERS"}</div>
-              </div>
-            </div>
-
-            {/* Countdown */}
-            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 48 }}>
-              {[
-                { v: countdown.days, l: isRTL ? "أيام" : "DAYS" },
-                { v: countdown.hours, l: isRTL ? "ساعات" : "HOURS" },
-                { v: countdown.minutes, l: isRTL ? "دقائق" : "MINS" },
-                { v: countdown.seconds, l: isRTL ? "ثواني" : "SECS" }
-              ].map(({ v, l }, i) => (
-                <div key={i} style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.6)", borderRadius: 16, padding: "16px 20px", minWidth: 90 }}>
-                  <div style={{ fontSize: 32, fontWeight: 900, color: "#FFD700" }}>{String(v).padStart(2, "0")}</div>
-                  <div style={{ fontSize: 10, color: "#FFFFFF", fontWeight: 800, letterSpacing: "0.1em" }}>{l}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* SHOP NOW BUTTON */}
-            <motion.a
-              href="https://storegetlucky.netlify.app/shop"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 12,
-                background: "linear-gradient(135deg, #FFD700, #FFC107)",
-                color: "#000",
-                padding: "18px 48px",
-                borderRadius: 16,
-                fontSize: "clamp(18px, 3vw, 24px)",
-                fontWeight: 900,
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                textDecoration: "none",
-                boxShadow: "0 0 50px rgba(255,215,0,0.4), 0 10px 30px rgba(0,0,0,0.3)",
-                border: "2px solid #FFD700",
-                cursor: "pointer",
-              }}
+          {/* Tabs */}
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl p-1.5">
+            <button
+              onClick={() => setActiveTab("hot")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
+                activeTab === "hot"
+                  ? "bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/30"
+                  : "text-white/40 hover:text-white"
+              }`}
             >
-              {isRTL ? "تسوق الآن" : "Shop Now"}
-              <ArrowRight size={28} style={{ transform: isRTL ? "scaleX(-1)" : undefined }} />
-            </motion.a>
-
-            {/* Sub text under button */}
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 16, fontWeight: 600 }}>
-              {isRTL ? "كل عملية شراء تدخلك في السحب تلقائياً" : "Every purchase automatically enters you into the draw"}
-            </p>
+              <Flame size={15} />
+              {isRTL ? "الأكثر مبيعاً" : "Hot"}
+              {hotProducts.length > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${activeTab === "hot" ? "bg-white/20" : "bg-white/10"}`}>
+                  {hotProducts.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("popular")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
+                activeTab === "popular"
+                  ? "bg-[#FFD700] text-black shadow-lg shadow-[#FFD700]/30"
+                  : "text-white/40 hover:text-white"
+              }`}
+            >
+              <Star size={15} />
+              {isRTL ? "الأكثر شعبية" : "Popular"}
+              {popularProducts.length > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${activeTab === "popular" ? "bg-black/20" : "bg-white/10"}`}>
+                  {popularProducts.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Content */}
+        {loading ? (
+          /* Skeleton */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="rounded-2xl bg-white/5 border border-white/5 h-80 animate-pulse" />
+            ))}
+          </div>
+        ) : displayed.length === 0 ? (
+          <div className="text-center py-20 text-white/20">
+            <div className="text-5xl mb-4">{activeTab === "hot" ? "🔥" : "⭐"}</div>
+            <p className="font-bold uppercase tracking-widest text-sm">
+              {isRTL ? "لا توجد منتجات في هذه الفئة" : "No products in this category yet"}
+            </p>
+          </div>
+        ) : (
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            {displayed.map((p, i) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07, duration: 0.4 }}
+              >
+                <ProductCard
+                  p={p}
+                  formatPrice={formatPrice}
+                  t={t}
+                  lang={isRTL ? "AR" : "EN"}
+                  variant="popular"
+                  isAuthenticated={isAuthenticated}
+                  setModalOpen={setModalOpen}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* View All */}
+        {displayed.length > 0 && (
+          <div className="text-center mt-12">
+            <Link
+              to="/store"
+              className="inline-flex items-center gap-3 border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest transition-all"
+            >
+              {isRTL ? "تصفح جميع المنتجات" : "Browse All Products"}
+              <ArrowRight size={16} className={isRTL ? "rotate-180" : ""} />
+            </Link>
+          </div>
+        )}
 
       </div>
     </section>

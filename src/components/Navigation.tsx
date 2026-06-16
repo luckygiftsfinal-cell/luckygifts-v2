@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ShoppingCart, User, ChevronDown, Ticket, Crown, Menu, X, Globe, Coins } from "lucide-react";
+import { ShoppingCart, User, ChevronDown, Ticket, Crown, Menu, X, Globe, Coins, Calendar } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
@@ -13,6 +14,7 @@ export default function Navigation() {
   const { lang, setLang, t, isRTL } = useLanguage();
   const { currency, setCurrency } = useCurrency();
   const { user, isAuthenticated, isAdmin, setModalOpen, logout, earnedTickets } = useAuth();
+  const { totalItems, setIsCartOpen } = useCart();
   const [profileOpen, setProfileOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -95,7 +97,7 @@ export default function Navigation() {
               </div>
             </Link>
 
-            {/* TAGLINE: One Step Away From Your Dream — WHITE with animation */}
+            {/* TAGLINE: One Step Away From Your Dream */}
             <div className="flex-1 hidden lg:flex items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -189,6 +191,19 @@ export default function Navigation() {
                 </div>
               </div>
 
+              {/* Cart Button */}
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/5 transition-colors"
+              >
+                <ShoppingCart size={18} />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFD700] text-black text-[10px] font-black rounded-full flex items-center justify-center">
+                    {totalItems > 9 ? "9+" : totalItems}
+                  </span>
+                )}
+              </button>
+
               {!isAuthenticated ? (
                 <motion.div
                   onClick={() => setModalOpen(true)}
@@ -253,11 +268,17 @@ export default function Navigation() {
           {/* Desktop Navigation Links */}
           <div className={`hidden lg:flex items-center gap-8 border-t border-white/5 pt-5 pb-2 ${isRTL ? 'flex-row-reverse justify-start' : ''}`}>
             <Link to="/" className={getLinkClass("/")}>{t("home")}</Link>
+            <Link to="/store" className={getLinkClass("/store")}>
+              <ShoppingCart size={16} className={pathname === "/store" ? "text-[#FFD700]" : "text-[#FFD700]/70"} /> {t("dreamStore")}
+            </Link>
             <Link to="/vip" className={getLinkClass("/vip")}>
               <Crown size={16} className={pathname === "/vip" ? "text-[#FFD700]" : "text-[#FFD700]/70"} /> {t("vipMember")}
             </Link>
             <Link to="/how-it-works" className={getLinkClass("/how-it-works")}>{t("howItWorks")}</Link>
             <Link to="/prizes" className={getLinkClass("/prizes")}>{t("prizes")}</Link>
+            <Link to="/events" className={getLinkClass("/events")}>
+              <Calendar size={16} className={pathname === "/events" ? "text-[#FFD700]" : "text-[#FFD700]/70"} /> Active Events
+            </Link>
             <Link to="/faq" className={getLinkClass("/faq")}>{t("faq")}</Link>
             <Link to="/winners" className={getLinkClass("/winners")}>{t("winners")}</Link>
           </div>
@@ -276,9 +297,11 @@ export default function Navigation() {
                 <div className="flex flex-col gap-4">
                   {[
                     { path: "/", label: t("home") },
+                    { path: "/store", label: t("dreamStore"), icon: ShoppingCart },
                     { path: "/vip", label: t("vipMember"), icon: Crown },
                     { path: "/how-it-works", label: t("howItWorks") },
                     { path: "/prizes", label: t("prizes") },
+                    { path: "/events", label: "Active Events", icon: Calendar },
                     { path: "/faq", label: t("faq") },
                     { path: "/winners", label: t("winners") },
                   ].map((link) => (

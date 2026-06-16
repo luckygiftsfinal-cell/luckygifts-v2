@@ -3,6 +3,8 @@ import HowItWorks from "../sections/HowItWorks";
 import PopularProducts from "../sections/PopularProducts";
 import Testimonials from "../sections/Testimonials";
 import ReadyToChange from "../sections/ReadyToChange";
+import Sponsors from "../sections/Sponsors";
+import TrustBadges from "../sections/TrustBadges";
 import { Shield, Zap, Award, Star } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import SEO from "../components/SEO";
@@ -69,6 +71,24 @@ export default function HomePage() {
       </div>
 
       <Testimonials />
+
+      {/* Divider */}
+      <div className="bg-[#0a0a0f]">
+        <div className="container">
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+      </div>
+
+      <Sponsors />
+
+      {/* Divider */}
+      <div className="bg-[#0a0a0f]">
+        <div className="container">
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+      </div>
+
+      <TrustBadges />
     </div>
   );
 }

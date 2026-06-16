@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Zap, Crown, Gem, DollarSign, Tag, ChevronLeft, ChevronRight, Star, Shield, Truck, Trophy, Ticket, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Crown, Gem, DollarSign, Tag, ChevronLeft, ChevronRight, Star, Shield, Truck, Trophy, Ticket, ArrowLeft } from "lucide-react";
 import { useStore } from "../context/StoreContext";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -12,7 +12,7 @@ import SEO from "../components/SEO";
 const CATEGORY_ICONS: any = {
   Cash: DollarSign,
   Luxury: Gem,
-  Tech: Zap,
+  Tech: ShoppingCart,
   VIP: Crown,
   Prestige: Trophy,
 };
@@ -64,7 +64,7 @@ export default function ProductDetailPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  const handleBuyNow = () => {
+  const handleAddToCart = () => {
     if (!isAuthenticated) { setModalOpen(true); return; }
     if (!product) return;
     addItem({
@@ -77,9 +77,8 @@ export default function ProductDetailPage() {
       stock: String(product.stock),
       originalPrice: String(product.old_price),
     } as any);
-    // Close cart sidebar immediately so Buy Now goes directly to checkout
-    setIsCartOpen(false);
-    navigate("/checkout");
+    setIsCartOpen(true);
+    toast.success(lang === "AR" ? "تمت الإضافة إلى السلة" : "Added to cart!");
   };
 
   if (!product) {
@@ -294,10 +293,10 @@ export default function ProductDetailPage() {
             <div style={{ display: "flex", gap: 12, flexDirection: "column" }}>
               <button
                 className="pd-btn-buy"
-                onClick={handleBuyNow}
+                onClick={handleAddToCart}
                 style={{ width: "100%", padding: "18px 0", borderRadius: 18, background: "linear-gradient(135deg, #FFD700, #B8960C)", border: "none", color: "#000", fontWeight: 900, fontSize: 16, cursor: "pointer", letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 15px 40px rgba(255,215,0,0.3)", transition: "all 0.3s ease" }}
               >
-                <Zap size={18} /> {lang === "AR" ? "اشتر الآن" : "Buy Now"}
+                <ShoppingCart size={18} /> {lang === "AR" ? "أضف إلى السلة" : "Add to Cart"}
               </button>
             </div>
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   Crown, Star, Zap, Gem, Plus, Edit, Trash2, Users, DollarSign,
-  Save, X, Loader2, RefreshCw, Download
+  Save, X, Loader2, RefreshCw, Download, Ticket
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ interface VIPPackage {
   popular: boolean;
   active: boolean;
   created_at: string;
+  event_label: string;
+  tickets_count: number;
 }
 
 interface Subscription {
@@ -66,6 +68,8 @@ export default function AdminVIPPackages() {
     icon: "Crown",
     popular: false,
     active: true,
+    event_label: "VIP Event Access",
+    tickets_count: 0,
   });
 
   // Fetch packages and subscriptions
@@ -156,6 +160,8 @@ export default function AdminVIPPackages() {
         icon: "Crown",
         popular: false,
         active: true,
+        event_label: "VIP Event Access",
+        tickets_count: 0,
       });
     }
     setModalOpen(true);
@@ -187,6 +193,8 @@ export default function AdminVIPPackages() {
             icon: form.icon,
             popular: form.popular,
             active: form.active,
+            event_label: form.event_label,
+            tickets_count: form.tickets_count,
           })
           .eq("id", editingPackage.id);
 
@@ -205,6 +213,8 @@ export default function AdminVIPPackages() {
             icon: form.icon,
             popular: form.popular,
             active: form.active,
+            event_label: form.event_label,
+            tickets_count: form.tickets_count,
           });
 
         if (error) throw error;
@@ -250,11 +260,13 @@ export default function AdminVIPPackages() {
       return;
     }
 
-    const headers = ["Name", "Price", "Period", "Subscribers", "Revenue", "Status", "Popular"];
+    const headers = ["Name", "Price", "Period", "Tickets", "Event Label", "Subscribers", "Revenue", "Status", "Popular"];
     const rows = packages.map((pkg) => [
       pkg.name,
       `$${pkg.price}`,
       pkg.period,
+      pkg.tickets_count?.toString() || "0",
+      pkg.event_label || "VIP Event Access",
       getSubscriberCount(pkg.id).toString(),
       `$${getPackageRevenue(pkg.id)}`,
       pkg.active ? "Active" : "Inactive",
@@ -384,6 +396,13 @@ export default function AdminVIPPackages() {
                   <span className="text-[#64748b] ml-1">/{pkg.period}</span>
                 </div>
 
+                {/* Tickets & Event Label */}
+                <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-white/5">
+                  <Ticket size={14} className="text-[#FFD700]" />
+                  <span className="text-sm text-white font-bold">{pkg.tickets_count || 0} TICKETS</span>
+                  <span className="text-xs text-[#FFD700] ml-auto">+ {pkg.event_label || "VIP Event Access"}</span>
+                </div>
+
                 <div className="space-y-3 mb-6">
                   {(pkg.features || []).map((feature, i) => (
                     <div key={i} className="flex items-center gap-3">
@@ -477,6 +496,36 @@ export default function AdminVIPPackages() {
                     <option value="year">Yearly</option>
                     <option value="lifetime">Lifetime</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Tickets Count & Event Label */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Tickets Count</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={form.tickets_count || ""}
+                    onChange={(e) => setForm({ ...form, tickets_count: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-[10px] text-[#64748b] mt-1">
+                    Number of tickets included
+                  </p>
+                </div>
+                <div>
+                  <label className="form-label">Event Label</label>
+                  <input
+                    className="form-input"
+                    placeholder="e.g. VIP Event Access"
+                    value={form.event_label || ""}
+                    onChange={(e) => setForm({ ...form, event_label: e.target.value })}
+                  />
+                  <p className="text-[10px] text-[#64748b] mt-1">
+                    Shown next to tickets count
+                  </p>
                 </div>
               </div>
 

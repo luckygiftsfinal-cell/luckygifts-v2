@@ -1,6 +1,7 @@
 import React from "react";
 import { Diamond, Ticket, Trophy, Sparkles, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import SEO from "../components/SEO";
 
 export default function HowItWorksPage() {
@@ -147,28 +148,25 @@ export default function HowItWorksPage() {
           ))}
         </div>
 
-        {/* SHOP NOW BUTTON - External Link */}
+        {/* SHOP NOW BUTTON - Internal Link */}
         <div style={{ textAlign: "center", marginTop: 120, paddingBottom: 100 }}>
-          <motion.a
-            href="https://storegetlucky.netlify.app/shop"
-            target="_blank"
-            rel="noopener noreferrer"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="btn-primary"
-            style={{ 
-              padding: "22px 70px", 
-              fontSize: 22, 
-              borderRadius: 100,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 12,
-              textDecoration: "none",
-              boxShadow: "0 0 40px rgba(255,215,0,0.3)"
-            }}
-          >
-            Start Your Journey Now <ArrowRight size={24} />
-          </motion.a>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ display: "inline-block" }}>
+            <Link
+              to="/store"
+              className="bg-gold text-black font-black rounded-2xl flex items-center justify-center gap-4 shadow-[0_0_60px_rgba(255,215,0,0.5)] hover:scale-110 transition-transform border-3 border-[#FFD700]"
+              style={{
+                padding: "22px 70px",
+                fontSize: 22,
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 12,
+                boxShadow: "0 0 40px rgba(255,215,0,0.3)"
+              }}
+            >
+              Start Your Journey Now <ArrowRight size={24} />
+            </Link>
+          </motion.div>
         </div>
       </div>
     </div>

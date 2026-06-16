@@ -21,10 +21,11 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
   const { addItem, items } = useCart();
   const isAdded = items.some(item => item.id === pkg.id);
 
-  const entriesCount = pkg.features?.find((f: string) => f.includes('entries'))?.match(/\d+/)?.[0] || '0';
-  const eventTicketsLabel = pkg.features?.find((f: string) => 
-    f.toLowerCase().includes('event') || f.toLowerCase().includes('dubai')
-  ) || 'VIP Event Access';
+  // ✅ استخدام tickets_count من قاعدة البيانات (من StoreContext)
+  const entriesCount = pkg.tickets_count?.toString() || '0';
+
+  // ✅ استخدام event_label من قاعدة البيانات (من StoreContext)
+  const eventTicketsLabel = pkg.event_label || 'VIP Event Access';
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -53,6 +54,37 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
       });
     }
     setTimeout(() => navigate("/checkout"), 300);
+  };
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePayment = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/.netlify/functions/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: pkg.price,
+          packageName: pkg.name,
+          packageId: pkg.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data?.payment_url) {
+        window.location.href = data.payment_url;
+      } else {
+        alert("Something went wrong. Please try again.");
+        console.error("Chain2pay response:", data);
+      }
+    } catch (err) {
+      alert("Connection error. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const Icon = ICON_MAP[pkg.icon] || Star;
@@ -157,6 +189,7 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
           <span style={{ fontSize: 16, color: "#FFFFFF", fontWeight: 600 }}>/{pkg.period || 'one-time'}</span>
         </div>
 
+        {/* ✅ Tickets & Event Label - من قاعدة البيانات */}
         <div style={{
           background: "rgba(255,215,0,0.1)",
           borderRadius: 12,
@@ -188,15 +221,18 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
         </ul>
 
         <button
-          onClick={() => navigate(`/vip-contact?package=${encodeURIComponent(pkg.name)}&price=${pkg.price}`)}
+          onClick={handlePayment}
           className="btn-primary"
+          disabled={isLoading}
           style={{
             width: "100%",
             justifyContent: "center",
+            opacity: isLoading ? 0.7 : 1,
+            cursor: isLoading ? "not-allowed" : "pointer",
           }}
         >
           <Zap size={20} />
-          CONTACT US
+          {isLoading ? "Processing..." : "START NOW"}
         </button>
       </div>
     </motion.div>

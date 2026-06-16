@@ -5,6 +5,7 @@ import Navigation from "./components/Navigation";
 import PageHeaderActions from "./components/PageHeaderActions";
 import Footer from "./components/Footer";
 import AuthModal from "./components/AuthModal";
+import CartSidebar from "./components/CartSidebar";
 import { AuthProvider } from "./context/AuthContext";
 import { StoreProvider } from "./context/StoreContext";
 import { CartProvider } from "./context/CartContext";
@@ -28,6 +29,8 @@ const OrderHistoryPage = lazy(() => import("./pages/OrderHistoryPage"));
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const WorkWithUsPage = lazy(() => import("./pages/WorkWithUsPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
+const DreamStorePage = lazy(() => import("./pages/DreamStorePage"));
+const ActiveEventsPage = lazy(() => import("./pages/ActiveEventsPage"));
 
 // Admin Pages
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
@@ -41,6 +44,7 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminWinners = lazy(() => import("./pages/admin/AdminWinners"));
 const AdminPromoCodes = lazy(() => import("./pages/admin/AdminPromoCodes"));
 const AdminApplications = lazy(() => import("./pages/admin/AdminApplications"));
+const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
 
 // Loading Component
 const PageLoader = () => (
@@ -82,7 +86,6 @@ function PayPalWrapper({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
-  // Wait until client ID is loaded
   if (!clientId) return <>{children}</>;
 
   return (
@@ -109,10 +112,11 @@ export default function App() {
           <PayPalWrapper>
             <ScrollToTop />
             <AuthModal />
-            <Toaster 
-              position="top-right" 
-              expand={false} 
-              richColors 
+            <CartSidebar />
+            <Toaster
+              position="top-right"
+              expand={false}
+              richColors
               toastOptions={{
                 style: {
                   background: '#12121a',
@@ -136,6 +140,9 @@ export default function App() {
                   <Route path="/how-it-works" element={<HowItWorksPage />} />
                   <Route path="/vip" element={<VIPPage />} />
                   <Route path="/vip-contact" element={<VIPContactPage />} />
+                  <Route path="/store" element={<DreamStorePage />} />
+                  <Route path="/store/product/:id" element={<ProductDetailPage />} />
+                  <Route path="/events" element={<ActiveEventsPage />} />
 
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
@@ -157,6 +164,7 @@ export default function App() {
                     <Route path="winners" element={<AdminWinners />} />
                     <Route path="promo-codes" element={<AdminPromoCodes />} />
                     <Route path="applications" element={<AdminApplications />} />
+                    <Route path="events" element={<AdminEvents />} />
                   </Route>
 
                   <Route path="*" element={

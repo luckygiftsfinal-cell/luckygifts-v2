@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Lock, Zap, Calendar } from "lucide-react";
-
+import { ArrowRight, Lock, Zap, Calendar, HelpCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function HeroSection() {
@@ -111,12 +111,12 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* ─── BOTTOM BAR: Countdown + Shop Now Button ─── */}
+      {/* ─── BOTTOM BAR: Countdown + Buttons ─── */}
       <motion.div 
         initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
         className="absolute bottom-6 left-0 right-0 z-20 px-4"
       >
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4">
 
           {/* Countdown Box */}
           <div className="flex items-center gap-4 sm:gap-6 bg-black/80 border-2 border-[#FFD700]/40 rounded-2xl p-4 sm:p-6 backdrop-blur-xl shadow-[0_0_50px_rgba(255,215,0,0.2)]">
@@ -147,16 +147,27 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Shop Now Button + Trust Badges */}
+          {/* Buttons Container */}
           <div className="flex flex-col items-center gap-3">
-            <a 
-              href="https://storegetlucky.netlify.app/shop"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-gold text-black py-5 px-10 sm:py-7 sm:px-16 text-xl sm:text-3xl font-black rounded-2xl flex items-center justify-center gap-4 shadow-[0_0_60px_rgba(255,215,0,0.5)] hover:scale-110 transition-transform whitespace-nowrap border-3 border-[#FFD700]"
-            >
-              {t("startShopping")} <ArrowRight size={28} />
-            </a>
+            {/* Main Buttons Row */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              {/* Shop Now Button */}
+              <Link 
+                to="/store"
+                className="bg-gold text-black py-5 px-10 sm:py-7 sm:px-16 text-xl sm:text-3xl font-black rounded-2xl flex items-center justify-center gap-4 shadow-[0_0_60px_rgba(255,215,0,0.5)] hover:scale-110 transition-transform whitespace-nowrap border-3 border-[#FFD700]"
+              >
+                {t("startShopping")} <ArrowRight size={28} />
+              </Link>
+
+              {/* How It Works Button */}
+              <Link 
+                to="/how-it-works"
+                className="bg-transparent text-white py-5 px-8 sm:py-7 sm:px-12 text-lg sm:text-2xl font-black rounded-2xl flex items-center justify-center gap-3 border-2 border-white/30 hover:border-[#FFD700]/60 hover:text-[#FFD700] hover:bg-white/5 transition-all whitespace-nowrap backdrop-blur-sm"
+              >
+                <HelpCircle size={24} />
+                {t("howItWorks") || "How It Works"}
+              </Link>
+            </div>
 
             {/* Trust Badges */}
             <div className="flex items-center gap-3 sm:gap-4">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Eye, EyeOff, Mail, Lock, User, Phone, ChevronDown, Check } from "lucide-react";
+import { X, Eye, EyeOff, Mail, Lock, User, Phone, ChevronDown, Check, Gift } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { COUNTRY_PHONE_CODES, getDialCodeByCountry } from "../data/countryPhoneCodes";
 
@@ -20,7 +20,16 @@ export default function AuthModal() {
     password: "",
     confirmPassword: "",
     agreeTerms: false,
+    referralCode: "",
   });
+
+  // Load referral code from localStorage on mount
+  useEffect(() => {
+    const savedRef = localStorage.getItem('luckygifts_ref_code');
+    if (savedRef) {
+      setForm(prev => ({ ...prev, referralCode: savedRef }));
+    }
+  }, []);
 
   // Update dial code when country changes
   useEffect(() => {
@@ -56,19 +65,16 @@ export default function AuthModal() {
     if (!validate()) return;
 
     if (mode === "login") {
-      // ✅ Login only needs email and password
       await login(form.email, form.password);
     } else {
-      // ✅ Register needs all fields including country
       const fullPhone = `${form.dialCode} ${form.phone}`;
-      await register(form.name, form.email, fullPhone, form.password, form.country);
+      await register(form.name, form.email, fullPhone, form.password, form.country, form.referralCode || undefined);
     }
   };
 
   const switchMode = () => {
     setMode(mode === "login" ? "register" : "login");
     setErrors({});
-    // Reset form when switching
     setForm({
       name: "",
       email: "",
@@ -78,6 +84,7 @@ export default function AuthModal() {
       password: "",
       confirmPassword: "",
       agreeTerms: false,
+      referralCode: localStorage.getItem('luckygifts_ref_code') || "",
     });
   };
 
@@ -141,7 +148,6 @@ export default function AuthModal() {
             <div>
               <label className="form-label">Phone Number</label>
               <div className="flex gap-2">
-                {/* Country Selector */}
                 <div className="relative flex-shrink-0">
                   <button
                     type="button"
@@ -153,7 +159,6 @@ export default function AuthModal() {
                     <ChevronDown size={14} className="text-[#64748b] ml-auto" />
                   </button>
 
-                  {/* Country Dropdown */}
                   <AnimatePresence>
                     {countryDropdownOpen && (
                       <motion.div
@@ -194,7 +199,6 @@ export default function AuthModal() {
                   </AnimatePresence>
                 </div>
 
-                {/* Phone Input */}
                 <div className="flex-1 relative">
                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
                   <input
@@ -212,6 +216,28 @@ export default function AuthModal() {
               {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
               <p className="text-[10px] text-[#64748b] mt-1">
                 {selectedCountry?.flag} {selectedCountry?.name} ({form.dialCode})
+              </p>
+            </div>
+          )}
+
+          {/* Referral Code - Register only */}
+          {mode === "register" && (
+            <div>
+              <label className="form-label flex items-center gap-2">
+                <Gift size={14} className="text-[#FFD700]" />
+                Referral Code (Optional)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="form-input uppercase"
+                  placeholder="REF-ABC123"
+                  value={form.referralCode}
+                  onChange={(e) => setForm({ ...form, referralCode: e.target.value.toUpperCase() })}
+                />
+              </div>
+              <p className="text-[10px] text-[#64748b] mt-1">
+                Have a referral code? Enter it here to earn rewards for your referrer.
               </p>
             </div>
           )}

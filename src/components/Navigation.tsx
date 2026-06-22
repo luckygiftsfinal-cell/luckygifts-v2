@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ShoppingCart, User, ChevronDown, Ticket, Crown, Menu, X, Globe, Coins, Calendar } from "lucide-react";
+import { ShoppingCart, User, ChevronDown, Ticket, Crown, Menu, X, Globe, Coins, Calendar, BookOpen, Gift } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { useAuth } from "../context/AuthContext";
@@ -13,7 +13,7 @@ export default function Navigation() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { lang, setLang, t, isRTL } = useLanguage();
   const { currency, setCurrency } = useCurrency();
-  const { user, isAuthenticated, isAdmin, setModalOpen, logout, earnedTickets } = useAuth();
+  const { user, isAuthenticated, isAdmin, setModalOpen, logout, earnedTickets, realTicketCount } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
   const [profileOpen, setProfileOpen] = useState(false);
   const { pathname } = useLocation();
@@ -97,7 +97,6 @@ export default function Navigation() {
               </div>
             </Link>
 
-            {/* TAGLINE: One Step Away From Your Dream */}
             <div className="flex-1 hidden lg:flex items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -186,7 +185,7 @@ export default function Navigation() {
                     {t("earned")}
                   </span>
                   <span className="text-sm font-black text-[#FFD700] leading-none uppercase tracking-tight">
-                    {earnedTickets} <span className="hidden sm:inline">{t("tickets")}</span>
+                    {realTicketCount > 0 ? realTicketCount : earnedTickets} <span className="hidden sm:inline">{t("tickets")}</span>
                   </span>
                 </div>
               </div>
@@ -230,17 +229,42 @@ export default function Navigation() {
                   </div>
 
                   {profileOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 glass rounded-2xl overflow-hidden shadow-2xl border border-white/10 py-2 z-[2000]">
+                    <div className="absolute top-full right-0 mt-2 w-56 glass rounded-2xl overflow-hidden shadow-2xl border border-white/10 py-2 z-[2000]">
                       <div className="px-4 py-2 border-b border-white/5 mb-2">
                         <p className="text-xs text-white/40 font-bold uppercase tracking-widest">{t("signedInAs")}</p>
                         <p className="text-sm text-white font-black truncate">{user?.email}</p>
+                        {user?.referralPoints !== undefined && user.referralPoints > 0 && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Gift size={10} className="text-[#FFD700]" />
+                            <span className="text-xs text-[#FFD700] font-bold">{user.referralPoints} points</span>
+                          </div>
+                        )}
                       </div>
                       {isAdmin && (
                         <Link to="/admin" onClick={() => setProfileOpen(false)} className="block px-4 py-2 text-sm font-black text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors border-b border-white/5">
                           {t("adminDashboard")}
                         </Link>
                       )}
+                      <Link to="/my-library" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white hover:bg-white/5 transition-colors">
+                        <BookOpen size={14} className="text-[#FFD700]" />
+                        My Library
+                        {realTicketCount > 0 && (
+                          <span className="ml-auto bg-[#FFD700] text-black text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                            {realTicketCount}
+                          </span>
+                        )}
+                      </Link>
                       <Link to="/orders" onClick={() => setProfileOpen(false)} className="block px-4 py-2 text-sm font-bold text-white hover:bg-white/5 transition-colors">{t("orderHistory")}</Link>
+                      {/* NEW: Referral Link */}
+                      <Link to="/referral" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white hover:bg-white/5 transition-colors">
+                        <Gift size={14} className="text-[#FFD700]" />
+                        Referrals
+                        {user?.totalReferrals !== undefined && user.totalReferrals > 0 && (
+                          <span className="ml-auto bg-[#10B981] text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                            {user.totalReferrals}
+                          </span>
+                        )}
+                      </Link>
                       <button
                         onClick={async () => {
                           await logout();
@@ -316,6 +340,36 @@ export default function Navigation() {
                       {link.label}
                     </Link>
                   ))}
+                  {isAuthenticated && (
+                    <>
+                      <Link
+                        to="/my-library"
+                        onClick={() => setMobileOpen(false)}
+                        className={`text-lg font-black uppercase tracking-widest flex items-center gap-3 py-2 ${pathname === "/my-library" ? "text-[#FFD700]" : "text-white"}`}
+                      >
+                        <BookOpen size={18} className="text-[#FFD700]" />
+                        My Library
+                        {realTicketCount > 0 && (
+                          <span className="ml-auto bg-[#FFD700] text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                            {realTicketCount}
+                          </span>
+                        )}
+                      </Link>
+                      <Link
+                        to="/referral"
+                        onClick={() => setMobileOpen(false)}
+                        className={`text-lg font-black uppercase tracking-widest flex items-center gap-3 py-2 ${pathname === "/referral" ? "text-[#FFD700]" : "text-white"}`}
+                      >
+                        <Gift size={18} className="text-[#FFD700]" />
+                        Referrals
+                        {user?.totalReferrals !== undefined && user.totalReferrals > 0 && (
+                          <span className="ml-auto bg-[#10B981] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            {user.totalReferrals}
+                          </span>
+                        )}
+                      </Link>
+                    </>
+                  )}
                 </div>
 
                 <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-4">

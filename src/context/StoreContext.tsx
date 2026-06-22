@@ -86,6 +86,28 @@ export interface VIPPackage {
   tickets_count: number;
 }
 
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referred_id: string;
+  referral_code: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  order_id: string | null;
+  order_amount: number;
+  points_earned: number;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface UserPoints {
+  id: string;
+  user_id: string;
+  points: number;
+  total_earned: number;
+  total_spent: number;
+  updated_at: string;
+}
+
 interface StoreContextType {
   categories: Category[];
   draws: PrizeDraw[];
@@ -94,6 +116,8 @@ interface StoreContextType {
   tickets: UserTicket[];
   promoCodes: PromoCode[];
   vipPackages: VIPPackage[];
+  referrals: Referral[];
+  userPoints: UserPoints[];
   loading: boolean;
   addCategory: (cat: Partial<Category>) => Promise<void>;
   updateCategory: (cat: Category) => Promise<void>;
@@ -113,6 +137,9 @@ interface StoreContextType {
   deletePromoCode: (id: string) => Promise<void>;
   issueTickets: (orderId: string, userId: string, count: number) => Promise<string[]>;
   updateVIPPackage: (pkg: VIPPackage) => void;
+  completeReferral: (orderId: string, userId: string, orderAmount: number) => Promise<void>;
+  getUserReferrals: (userId: string) => Promise<Referral[]>;
+  getUserPoints: (userId: string) => Promise<UserPoints | null>;
   refreshData: () => Promise<void>;
 }
 
@@ -128,6 +155,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<UserTicket[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [vipPackages, setVipPackages] = useState<VIPPackage[]>(initialVIPPackages);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [userPoints, setUserPoints] = useState<UserPoints[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -138,23 +167,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const handleReferral = () => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
-    if (ref) localStorage.setItem('luckygifts_ref', ref);
+    if (ref) {
+      localStorage.setItem('luckygifts_ref_code', ref);
+      document.cookie = `luckygifts_ref=${ref}; path=/; max-age=604800`;
+    }
   };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch Categories ordered by sort_order
       const { data: catData } = await supabase
         .from('categories').select('*').eq('active', true).order('sort_order', { ascending: true });
       if (catData) setCategories(catData);
 
-      // Fetch Prize Draws ordered by sort_order
       const { data: drawData } = await supabase
         .from('prize_draws').select('*').eq('active', true).order('sort_order', { ascending: true });
       if (drawData) setDraws(drawData);
 
-      // Fetch Products
       const { data: prodData } = await supabase.from('products').select('*').order('price', { ascending: true });
       if (prodData) {
         const mappedProducts = prodData.map(p => ({
@@ -179,7 +208,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const { data: promoData } = await supabase.from('promo_codes').select('*');
       if (promoData) setPromoCodes(promoData);
 
-      // Fetch VIP Packages
       const { data: vipData } = await supabase.from('vip_packages').select('*').eq('active', true).order('price', { ascending: true });
       if (vipData) {
         const mappedVip = vipData.map((p: any) => ({
@@ -197,6 +225,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }));
         setVipPackages(mappedVip);
       }
+
+      const { data: refData } = await supabase.from('referrals').select('*').order('created_at', { ascending: false });
+      if (refData) setReferrals(refData);
+
+      const { data: pointsData } = await supabase.from('user_points').select('*');
+      if (pointsData) setUserPoints(pointsData);
     } catch (error) {
       console.error("Error fetching data from Supabase:", error);
     } finally {
@@ -204,7 +238,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ── Categories ──
   const addCategory = async (cat: Partial<Category>) => {
     const maxOrder = categories.reduce((max, c) => Math.max(max, c.sort_order || 0), 0);
     const dbCat = {
@@ -245,7 +278,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await fetchData();
   };
 
-  // ── Prize Draws ──
   const addDraw = async (draw: Partial<PrizeDraw>) => {
     const maxOrder = draws.filter(d => d.category_key === draw.category_key)
       .reduce((max, d) => Math.max(max, d.sort_order || 0), 0);
@@ -282,7 +314,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await fetchData();
   };
 
-  // ── Products ──
   const addProduct = async (product: Partial<Product>) => {
     const dbProduct: Record<string, any> = {
       title: product.title || "Untitled Product",
@@ -376,14 +407,125 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setVipPackages(prev => prev.map(p => p.id === pkg.id ? pkg : p));
   };
 
+  const completeReferral = async (orderId: string, userId: string, orderAmount: number) => {
+    try {
+      const { data: referral, error: refError } = await supabase
+        .from('referrals')
+        .select('*')
+        .eq('referred_id', userId)
+        .eq('status', 'pending')
+        .single();
+
+      if (refError || !referral) {
+        console.log("No pending referral found for user:", userId);
+        return;
+      }
+
+      const pointsEarned = Math.floor(orderAmount / 35);
+
+      if (pointsEarned <= 0) {
+        await supabase
+          .from('referrals')
+          .update({
+            status: 'completed',
+            order_id: orderId,
+            order_amount: orderAmount,
+            points_earned: 0,
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', referral.id);
+        await fetchData();
+        return;
+      }
+
+      await supabase
+        .from('referrals')
+        .update({
+          status: 'completed',
+          order_id: orderId,
+          order_amount: orderAmount,
+          points_earned: pointsEarned,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', referral.id);
+
+      const { data: referrerPoints } = await supabase
+        .from('user_points')
+        .select('*')
+        .eq('user_id', referral.referrer_id)
+        .single();
+
+      if (referrerPoints) {
+        await supabase
+          .from('user_points')
+          .update({
+            points: referrerPoints.points + pointsEarned,
+            total_earned: referrerPoints.total_earned + pointsEarned,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', referral.referrer_id);
+      }
+
+      const { data: referrerProfile } = await supabase
+        .from('profiles')
+        .select('total_referrals, referral_points')
+        .eq('id', referral.referrer_id)
+        .single();
+
+      if (referrerProfile) {
+        await supabase
+          .from('profiles')
+          .update({
+            total_referrals: (referrerProfile.total_referrals || 0) + 1,
+            referral_points: (referrerProfile.referral_points || 0) + pointsEarned
+          })
+          .eq('id', referral.referrer_id);
+      }
+
+      await fetchData();
+      console.log(`Referral completed: ${pointsEarned} points awarded to referrer ${referral.referrer_id}`);
+    } catch (err) {
+      console.error("Error completing referral:", err);
+    }
+  };
+
+  const getUserReferrals = async (userId: string): Promise<Referral[]> => {
+    const { data, error } = await supabase
+      .from('referrals')
+      .select('*')
+      .eq('referrer_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching user referrals:", error);
+      return [];
+    }
+    return data || [];
+  };
+
+  const getUserPoints = async (userId: string): Promise<UserPoints | null> => {
+    const { data, error } = await supabase
+      .from('user_points')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching user points:", error);
+      return null;
+    }
+    return data;
+  };
+
   return (
     <StoreContext.Provider value={{
-      categories, draws, products, orders, tickets, promoCodes, vipPackages, loading,
+      categories, draws, products, orders, tickets, promoCodes, vipPackages, referrals, userPoints, loading,
       addCategory, updateCategory, deleteCategory, reorderCategories,
       addDraw, updateDraw, deleteDraw, reorderDraws,
       addProduct, updateProduct, deleteProduct,
       addOrder, updateOrder, issueTickets, updateVIPPackage,
       validatePromoCode, addPromoCode, deletePromoCode,
+      completeReferral, getUserReferrals, getUserPoints,
       refreshData: fetchData
     }}>
       {children}

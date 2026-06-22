@@ -10,6 +10,10 @@ interface User {
   vipLevel: "None" | "Gold" | "Diamond";
   role: "user" | "admin";
   ticketBalance: number;
+  referralCode?: string;
+  referredBy?: string | null;
+  totalReferrals?: number;
+  referralPoints?: number;
 }
 
 interface AuthContextType {
@@ -18,13 +22,14 @@ interface AuthContextType {
   isAdmin: boolean;
   isLoading: boolean;
   earnedTickets: number;
+  realTicketCount: number;
   addTickets: (count: number) => void;
   isModalOpen: boolean;
   setModalOpen: (open: boolean) => void;
   mode: "login" | "register";
   setMode: (mode: "login" | "register") => void;
   login: (email: string, password?: string) => Promise<boolean>;
-  register: (name: string, email: string, phone: string, password?: string, country?: string) => Promise<boolean>;
+  register: (name: string, email: string, phone: string, password?: string, country?: string, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -39,10 +44,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('earned_tickets');
     return saved ? parseInt(saved) : 0;
   });
+  const [realTicketCount, setRealTicketCount] = useState(0);
+
+  const fetchRealTicketCount = async (userId?: string) => {
+    const targetId = userId || user?.id;
+    if (!targetId) return;
+
+    try {
+      const { count, error } = await supabase
+        .from("tickets")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", targetId)
+        .eq("status", "active");
+
+      if (!error) {
+        setRealTicketCount(count || 0);
+      }
+    } catch (err) {
+      console.error("Ticket count error:", err);
+    }
+  };
 
   const addTickets = async (count: number) => {
     if (!user) {
-      // For guest users, still use localStorage as fallback
       const newVal = earnedTickets + count;
       setEarnedTickets(newVal);
       localStorage.setItem('earned_tickets', newVal.toString());
@@ -59,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ ...user, ticketBalance: newBalance });
       setEarnedTickets(newBalance);
       localStorage.setItem('earned_tickets', newBalance.toString());
+      fetchRealTicketCount(user.id);
     } else {
       console.error("Error updating tickets:", error);
       toast.error("Failed to update tickets in database");
@@ -75,13 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Skip if already synced this exact session token
     const sessionKey = session?.access_token?.slice(-10);
     if (lastSyncedSession.current === sessionKey) return;
     lastSyncedSession.current = sessionKey;
 
     try {
-      console.log("Syncing profile for session:", userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -89,7 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (profile) {
-        console.log("Profile found:", profile.full_name);
         setUser({
           id: userId,
           email: session.user.email!,
@@ -97,15 +119,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           phone: profile.phone,
           role: profile.role,
           vipLevel: profile.vip_level,
-          ticketBalance: profile.ticket_balance || 0
+          ticketBalance: profile.ticket_balance || 0,
+          referralCode: profile.referral_code,
+          referredBy: profile.referred_by,
+          totalReferrals: profile.total_referrals || 0,
+          referralPoints: profile.referral_points || 0,
         });
         setEarnedTickets(profile.ticket_balance || 0);
         localStorage.setItem('earned_tickets', (profile.ticket_balance || 0).toString());
+        fetchRealTicketCount(userId);
       } else {
-        console.log("Profile not found or error, creating default...", error);
         const role = session.user.email?.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
-        
-        // Try to insert, but handle potential race condition where it was just created
+
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert([
@@ -115,7 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               phone: session.user.user_metadata?.phone || "",
               role: role,
               vip_level: "None",
-              ticket_balance: 0
+              ticket_balance: 0,
+              total_referrals: 0,
+              referral_points: 0
             }
           ])
           .select()
@@ -129,12 +156,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             phone: newProfile.phone,
             role: newProfile.role,
             vipLevel: newProfile.vip_level,
-            ticketBalance: 0
+            ticketBalance: 0,
+            referralCode: newProfile.referral_code,
+            referredBy: newProfile.referred_by,
+            totalReferrals: 0,
+            referralPoints: 0,
           });
           setEarnedTickets(0);
         } else if (insertError) {
-          console.error("Profile creation failed (might already exist):", insertError);
-          // Final attempt to fetch if insert failed
           const { data: retryProfile } = await supabase.from('profiles').select('*').eq('id', userId).single();
           if (retryProfile) {
             setUser({
@@ -144,8 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               phone: retryProfile.phone,
               role: retryProfile.role,
               vipLevel: retryProfile.vip_level,
-              ticketBalance: retryProfile.ticket_balance || 0
+              ticketBalance: retryProfile.ticket_balance || 0,
+              referralCode: retryProfile.referral_code,
+              referredBy: retryProfile.referred_by,
+              totalReferrals: retryProfile.total_referrals || 0,
+              referralPoints: retryProfile.referral_points || 0,
             });
+            fetchRealTicketCount(userId);
           }
         }
       }
@@ -153,7 +187,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Error in syncProfile:", err);
     } finally {
       setIsLoading(false);
-      console.log("Profile sync finished for:", userId);
     }
   };
 
@@ -176,11 +209,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
+        setRealTicketCount(0);
         setIsLoading(false);
         return;
       }
       if (session) {
-        syncProfile(session); // fire and forget - don't block
+        syncProfile(session);
       }
     });
 
@@ -200,7 +234,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user && data.session) {
-        // onAuthStateChange handles syncProfile automatically
         setModalOpen(false);
         toast.success(`Welcome back!`);
         return true;
@@ -212,8 +245,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, phone: string, password?: string, country?: string): Promise<boolean> => {
+  const register = async (
+    name: string, 
+    email: string, 
+    phone: string, 
+    password?: string, 
+    country?: string,
+    referralCode?: string
+  ): Promise<boolean> => {
     setIsLoading(true);
+
+    const refCode = referralCode || localStorage.getItem('luckygifts_ref_code') || undefined;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password: password || "",
@@ -233,23 +276,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (data.user) {
-      // Role logic: check if it's the admin email
       const role = email.toLowerCase() === "luckygiftsfinal@gmail.com" ? "admin" : "user";
 
-      const { error: profileError } = await supabase.from('profiles').insert([
-        {
-          id: data.user.id,
-          full_name: name,
-          phone: phone,
-          country: country || "AE",
-          role: role,
-          vip_level: "None"
+      let referredBy = null;
+
+      // Check if user already has a referral (prevent using multiple codes)
+      const { data: existingRef } = await supabase
+        .from('referrals')
+        .select('id')
+        .eq('referred_id', data.user.id)
+        .single();
+
+      if (!existingRef && refCode) {
+        const { data: referrer } = await supabase
+          .from('profiles')
+          .select('id, referral_code')
+          .eq('referral_code', refCode)
+          .single();
+
+        if (referrer) {
+          // Prevent self-referral
+          if (referrer.id === data.user.id) {
+            toast.error("You cannot refer yourself!");
+            console.log("Self-referral blocked for user:", data.user.id);
+          } else {
+            referredBy = referrer.id;
+          }
         }
-      ]);
+      } else if (existingRef) {
+        console.log("User already has a referral, ignoring new code");
+      }
+
+      const { data: newProfile, error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: data.user.id,
+            full_name: name,
+            phone: phone,
+            country: country || "AE",
+            role: role,
+            vip_level: "None",
+            referred_by: referredBy,
+            total_referrals: 0,
+            referral_points: 0
+          }
+        ])
+        .select()
+        .single();
 
       if (profileError) {
         console.error("Error creating profile:", profileError);
       }
+
+      if (referredBy && newProfile) {
+        const { error: refError } = await supabase
+          .from('referrals')
+          .insert([
+            {
+              referrer_id: referredBy,
+              referred_id: data.user.id,
+              referral_code: refCode,
+              status: 'pending',
+              points_earned: 0
+            }
+          ]);
+
+        if (refError) {
+          console.error("Error creating referral:", refError);
+        }
+      }
+
+      localStorage.removeItem('luckygifts_ref_code');
     }
 
     setModalOpen(false);
@@ -265,6 +363,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setRealTicketCount(0);
     toast.info("You have been logged out.");
   };
 
@@ -276,6 +375,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: user?.role === "admin",
         isLoading,
         earnedTickets,
+        realTicketCount,
         addTickets,
         isModalOpen,
         setModalOpen,

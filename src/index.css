@@ -1297,3 +1297,92 @@ p {
   width: 100vw;
   margin-left: calc(-50vw + 50%);
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   TICKET PRINT STYLES
+   ═══════════════════════════════════════════════════════════ */
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print,
+  nav,
+  .ticker-wrap,
+  footer,
+  .admin-header,
+  .sidebar {
+    display: none !important;
+  }
+
+  .ticket-print {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100%;
+    margin: 0 auto;
+    background: white !important;
+  }
+
+  .ticket-print * {
+    color: black !important;
+    background: white !important;
+    border-color: #333 !important;
+    box-shadow: none !important;
+  }
+
+  .ticket-print .ticket-header {
+    background: linear-gradient(135deg, #FFD700, #FFC107) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .ticket-print .ticket-header * {
+    color: black !important;
+  }
+
+  .ticket-number {
+    font-size: 24pt !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .ticket-label {
+    font-size: 8pt !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.15em !important;
+  }
+
+  .ticket-value {
+    font-size: 11pt !important;
+    font-weight: 600 !important;
+  }
+
+  .ticket-divider {
+    border-top: 1px dashed #333 !important;
+    margin: 8px 0 !important;
+  }
+
+  .ticket-footer {
+    font-size: 7pt !important;
+    color: #666 !important;
+  }
+
+  .ticket-valid-badge {
+    border: 2px solid #333 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    font-size: 7pt !important;
+    font-weight: 800 !important;
+  }
+
+  /* Ensure ticket fills page nicely */
+  @page {
+    margin: 1cm;
+    size: auto;
+  }
+}

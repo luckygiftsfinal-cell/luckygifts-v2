@@ -1,13 +1,10 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Package, Ticket, Calendar, CheckCircle, Clock, Share2, Copy, Check } from "lucide-react";
+import { useStore } from "../context/StoreContext";
+import { Package, Ticket, Calendar, CheckCircle, Clock, Share2, Copy, Check, Gift, Coins, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "../context/LanguageContext";
-
-// Removed mockOrders in favor of Supabase data from StoreContext
-
-import { useStore } from "../context/StoreContext";
 
 export default function OrderHistoryPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -17,9 +14,12 @@ export default function OrderHistoryPage() {
   const { lang } = useLanguage();
   const navigate = useNavigate();
 
-  const referralLink = `${window.location.origin}?ref=${user?.id}`;
+  const referralLink = user?.referralCode 
+    ? `${window.location.origin}?ref=${user.referralCode}`
+    : '';
 
   const copyReferral = () => {
+    if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     toast.success(lang === 'AR' ? "تم نسخ رابط الإحالة!" : "Referral link copied!");
@@ -44,9 +44,8 @@ export default function OrderHistoryPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-[#f0ece4] pt-32 pb-24 font-['Outfit']">
-      {/* Background glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gold/5 blur-[150px] rounded-full pointer-events-none z-0" />
-      
+
       <div className="container relative z-10 max-w-5xl mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
@@ -55,22 +54,51 @@ export default function OrderHistoryPage() {
             <p className="text-white/40 font-medium">Track your past purchases and earned tickets.</p>
           </div>
 
-          {/* Referral Section */}
           <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 flex items-center gap-6 shadow-xl">
             <div className="w-12 h-12 rounded-2xl bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700] shadow-[0_0_15px_rgba(255,215,0,0.1)]">
               <Share2 size={24} />
             </div>
             <div className="flex-1">
               <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-1">Your Referral Link</p>
-              <p className="text-xs font-mono text-[#FFD700] truncate max-w-[200px]">{referralLink}</p>
+              <p className="text-xs font-mono text-[#FFD700] truncate max-w-[200px]">
+                {referralLink || 'Loading...'}
+              </p>
+              {user?.referralCode && (
+                <p className="text-[10px] text-white/30 mt-1">Code: {user.referralCode}</p>
+              )}
             </div>
             <button 
               onClick={copyReferral}
               className="p-3 hover:bg-white/5 rounded-xl transition-all text-[#FFD700] hover:scale-110 active:scale-95"
               title="Copy Link"
+              disabled={!referralLink}
             >
               {copied ? <Check size={20} /> : <Copy size={20} />}
             </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: 'rgba(255,215,0,0.2)', color: '#FFD700' }}>
+              <Ticket size={22} />
+            </div>
+            <div className="stat-value">{user?.ticketBalance || 0}</div>
+            <div className="stat-label">Total Tickets</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.2)', color: '#10B981' }}>
+              <Gift size={22} />
+            </div>
+            <div className="stat-value">{user?.totalReferrals || 0}</div>
+            <div className="stat-label">Referrals</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.2)', color: '#3B82F6' }}>
+              <Coins size={22} />
+            </div>
+            <div className="stat-value">{user?.referralPoints || 0}</div>
+            <div className="stat-label">Points</div>
           </div>
         </div>
 
@@ -146,14 +174,27 @@ export default function OrderHistoryPage() {
           </div>
         </div>
 
-        {/* Tickets Modal */}
+        <div className="mt-8 bg-gradient-to-r from-[#FFD700]/10 to-transparent border border-[#FFD700]/20 rounded-2xl p-6 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-black text-white uppercase tracking-tight">Invite Friends & Earn Points</h3>
+            <p className="text-sm text-white/40 mt-1">Earn 1 point for every $35 your friends spend</p>
+          </div>
+          <Link 
+            to="/referral" 
+            className="btn-primary px-6 py-3 text-sm"
+          >
+            <TrendingUp size={16} />
+            View Referrals
+          </Link>
+        </div>
+
         {viewingTickets && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setViewingTickets(null)} />
             <div className="relative bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95">
               <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Your Tickets</h3>
               <p className="text-white/40 text-xs font-mono mb-6">Order: {viewingTickets}</p>
-              
+
               <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                 {tickets.filter(t => t.order_id === viewingTickets).map((ticket, i) => (
                   <div key={i} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl">
@@ -165,7 +206,7 @@ export default function OrderHistoryPage() {
                   <p className="text-center py-10 text-white/20 text-xs font-bold uppercase tracking-widest">Generating tickets...</p>
                 )}
               </div>
-              
+
               <button 
                 onClick={() => setViewingTickets(null)}
                 className="w-full py-4 mt-8 bg-[#FFD700] text-black font-black uppercase tracking-widest text-xs rounded-xl"

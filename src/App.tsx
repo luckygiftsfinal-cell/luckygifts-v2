@@ -32,6 +32,18 @@ const ContactPage = lazy(() => import("./pages/ContactPage"));
 const DreamStorePage = lazy(() => import("./pages/DreamStorePage"));
 const ActiveEventsPage = lazy(() => import("./pages/ActiveEventsPage"));
 
+// NEW: Payment & Library Pages
+const PaymentSuccessPage = lazy(() => import("./pages/PaymentSuccessPage"));
+const MyLibraryPage = lazy(() => import("./pages/MyLibraryPage"));
+const TicketViewPage = lazy(() => import("./pages/TicketViewPage"));
+const VerifyTicketPage = lazy(() => import("./pages/VerifyTicketPage"));
+
+// NEW: Referral Page
+const ReferralPage = lazy(() => import("./pages/ReferralPage"));
+
+// NEW: Referral Redirect (for /ref/CODE links)
+const ReferralRedirect = lazy(() => import("./pages/ReferralRedirect"));
+
 // Admin Pages
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
 const AdminOverview = lazy(() => import("./pages/admin/AdminOverview"));
@@ -45,6 +57,7 @@ const AdminWinners = lazy(() => import("./pages/admin/AdminWinners"));
 const AdminPromoCodes = lazy(() => import("./pages/admin/AdminPromoCodes"));
 const AdminApplications = lazy(() => import("./pages/admin/AdminApplications"));
 const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
+const AdminPaymentsPage = lazy(() => import("./pages/admin/AdminPaymentsPage"));
 
 // Loading Component
 const PageLoader = () => (
@@ -153,6 +166,18 @@ export default function App() {
                   <Route path="/work-with-us" element={<WorkWithUsPage />} />
                   <Route path="/contact" element={<ContactPage />} />
 
+                  {/* NEW: Referral Route */}
+                  <Route path="/referral" element={<ReferralPage />} />
+
+                  {/* NEW: Referral Redirect Route (for /ref/CODE) */}
+                  <Route path="/ref/:code" element={<ReferralRedirect />} />
+
+                  {/* Payment & Library Routes */}
+                  <Route path="/payment/success" element={<PaymentSuccessPage />} />
+                  <Route path="/my-library" element={<MyLibraryPage />} />
+                  <Route path="/ticket/:ticketId" element={<TicketViewPage />} />
+                  <Route path="/verify/:ticketNumber?" element={<VerifyTicketPage />} />
+
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminOverview />} />
                     <Route path="products" element={<AdminProducts />} />
@@ -165,6 +190,7 @@ export default function App() {
                     <Route path="promo-codes" element={<AdminPromoCodes />} />
                     <Route path="applications" element={<AdminApplications />} />
                     <Route path="events" element={<AdminEvents />} />
+                    <Route path="payments" element={<AdminPaymentsPage />} />
                   </Route>
 
                   <Route path="*" element={

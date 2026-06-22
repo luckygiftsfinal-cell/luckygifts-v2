@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Tag,
   Briefcase,
-  Calendar
+  Calendar,
+  CreditCard
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -25,6 +26,7 @@ const sidebarItems = [
   { path: "/admin/products", icon: Package, label: "Products" },
   { path: "/admin/dream-store", icon: Store, label: "Dream Store" },
   { path: "/admin/orders", icon: ShoppingCart, label: "Orders" },
+  { path: "/admin/payments", icon: CreditCard, label: "Payments" },
   { path: "/admin/users", icon: Users, label: "VIP Users" },
   { path: "/admin/vip-packages", icon: Crown, label: "VIP Packages" },
   { path: "/admin/events", icon: Calendar, label: "Events" },

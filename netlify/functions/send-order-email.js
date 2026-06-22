@@ -19,7 +19,8 @@ exports.handler = async function (event) {
     amount,
     orderId,
     ebookUrl,
-    product,
+    status,
+    failureReason,
   } = body;
 
   if (!email) {
@@ -31,7 +32,7 @@ exports.handler = async function (event) {
     return { statusCode: 500, body: "Missing RESEND_API_KEY" };
   }
 
-  // ── Build ticket cards HTML ───────────────────────────────────
+  // ── Build ticket cards HTML with owner_name ──────────────────
   const ticketCardsHtml = ticketNumbers
     .map(
       (num, i) => `
@@ -62,32 +63,24 @@ exports.handler = async function (event) {
       </div>
 
       <!-- Ticket body -->
-      <div style="padding: 20px 24px; display:flex; align-items:center; justify-content:space-between;">
-        <div>
-          <div style="font-size:10px; color:rgba(255,215,0,0.6); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:6px;">
-            Ticket Number
-          </div>
-          <div style="font-size:22px; font-weight:900; color:#FFD700; letter-spacing:0.15em;">
-            ${num}
-          </div>
-          <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:6px;">
-            Draw Date: 31 Dec 2026
-          </div>
+      <div style="padding: 20px 24px;">
+        <div style="font-size:10px; color:rgba(255,215,0,0.6); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:6px;">
+          Ticket Number
         </div>
-        <div style="text-align:right;">
-          <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:4px;">Prize Pool</div>
-          <div style="font-size:16px; font-weight:900; color:#fff;">$1,000,000</div>
-          <div style="
-            margin-top:8px;
-            background:rgba(255,215,0,0.1);
-            border:1px solid rgba(255,215,0,0.3);
-            border-radius:6px;
-            padding:3px 10px;
-            font-size:9px;
-            color:#FFD700;
-            font-weight:800;
-            letter-spacing:0.1em;
-          ">VALID</div>
+        <div style="font-size:22px; font-weight:900; color:#FFD700; letter-spacing:0.15em; margin-bottom:8px;">
+          ${num}
+        </div>
+        
+        <!-- OWNER NAME -->
+        <div style="font-size:13px; color:rgba(255,255,255,0.7); margin-bottom:8px; padding: 6px 0; border-top: 1px dashed rgba(255,215,0,0.2); border-bottom: 1px dashed rgba(255,215,0,0.2);">
+          👤 <strong style="color:#FFD700;">Owner:</strong> ${fullName || "Customer"}
+        </div>
+        
+        <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:6px;">
+          Draw Date: 31 Dec 2026
+        </div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.3); margin-top:4px;">
+          ${packageName}
         </div>
       </div>
 
@@ -97,19 +90,67 @@ exports.handler = async function (event) {
       <!-- Bottom -->
       <div style="padding:12px 24px; display:flex; justify-content:space-between; align-items:center;">
         <div style="font-size:10px; color:rgba(255,255,255,0.3);">
-          ${packageName}
-        </div>
-        <div style="font-size:10px; color:rgba(255,255,255,0.3);">
           getluckygifts.shop
         </div>
+        <div style="
+          background:rgba(255,215,0,0.1);
+          border:1px solid rgba(255,215,0,0.3);
+          border-radius:6px;
+          padding:3px 10px;
+          font-size:9px;
+          color:#FFD700;
+          font-weight:800;
+          letter-spacing:0.1em;
+        ">VALID</div>
       </div>
     </div>
   `
     )
     .join("");
 
-  // ── Build full email HTML ─────────────────────────────────────
-  const html = `
+  // ── Determine email type ─────────────────────────────────────
+  const isFailed = status === "failed";
+
+  const html = isFailed 
+    ? buildFailureEmail({ fullName, packageName, amount, orderId, failureReason })
+    : buildSuccessEmail({ fullName, packageName, ticketNumbers, ticketsEarned, amount, orderId, ebookUrl, ticketCardsHtml });
+
+  const subject = isFailed
+    ? `❌ Payment Failed — LuckyGifts Order #${orderId?.substring(0, 8).toUpperCase()}`
+    : `🎟 Your ${ticketsEarned} Ticket${ticketsEarned > 1 ? "s" : ""} for the $1M Draw — LuckyGifts`;
+
+  // ── Send via Resend ───────────────────────────────────────────
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "LuckyGifts <noreply@getluckygifts.shop>",
+      to: [email],
+      subject,
+      html,
+    }),
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    console.error("Resend error:", result);
+    return { statusCode: 500, body: JSON.stringify({ error: result }) };
+  }
+
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ success: true, emailId: result.id }),
+  };
+};
+
+// ── Build success email ────────────────────────────────────────
+function buildSuccessEmail({ fullName, packageName, ticketNumbers, ticketsEarned, amount, orderId, ebookUrl, ticketCardsHtml }) {
+  return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -188,6 +229,9 @@ exports.handler = async function (event) {
         text-decoration:none;
         letter-spacing:0.05em;
       ">📥 Download eBook</a>
+      <div style="margin-top:16px; font-size:11px; color:rgba(255,255,255,0.3);">
+        Or visit <a href="https://getluckygifts.shop/my-library" style="color:#FFD700;">My Library</a> to access all your downloads
+      </div>
     </div>`
         : ""
     }
@@ -213,32 +257,70 @@ exports.handler = async function (event) {
 </body>
 </html>
   `;
+}
 
-  // ── Send via Resend ───────────────────────────────────────────
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "LuckyGifts <noreply@getluckygifts.shop>",
-      to: [email],
-      subject: `🎟 Your ${ticketsEarned} Ticket${ticketsEarned > 1 ? "s" : ""} for the $1M Draw — LuckyGifts`,
-      html,
-    }),
-  });
+// ── Build failure email ────────────────────────────────────────
+function buildFailureEmail({ fullName, packageName, amount, orderId, failureReason }) {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#0a0a0a; font-family:Arial,sans-serif;">
 
-  const result = await res.json();
+  <div style="background:linear-gradient(135deg,#0a0a0a,#1a0000); padding:40px 20px; text-align:center; border-bottom:2px solid #EF4444;">
+    <div style="font-size:28px; font-weight:900; color:#EF4444; letter-spacing:0.1em;">✦ LUCKYGIFTS ✦</div>
+    <div style="font-size:13px; color:rgba(255,255,255,0.5); margin-top:8px; letter-spacing:0.2em;">PAYMENT NOT COMPLETED</div>
+  </div>
 
-  if (!res.ok) {
-    console.error("Resend error:", result);
-    return { statusCode: 500, body: JSON.stringify({ error: result }) };
-  }
+  <div style="max-width:600px; margin:0 auto; padding:40px 20px;">
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="font-size:32px; margin-bottom:16px;">❌</div>
+      <h1 style="color:#fff; font-size:24px; font-weight:900; margin:0 0 12px;">
+        Sorry, ${fullName}
+      </h1>
+      <p style="color:rgba(255,255,255,0.6); font-size:15px; line-height:1.7; margin:0;">
+        Your payment for <strong style="color:#EF4444;">${packageName}</strong> could not be completed.
+      </p>
+    </div>
 
-  return {
-    statusCode: 200,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ success: true, emailId: result.id }),
-  };
-};
+    <div style="background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.15); border-radius:12px; padding:20px 24px; margin-bottom:32px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+        <span style="color:rgba(255,255,255,0.4); font-size:13px;">Order ID</span>
+        <span style="color:#fff; font-size:13px; font-weight:700;">${orderId?.substring(0, 8).toUpperCase()}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+        <span style="color:rgba(255,255,255,0.4); font-size:13px;">Amount</span>
+        <span style="color:#EF4444; font-size:13px; font-weight:700;">$${amount}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span style="color:rgba(255,255,255,0.4); font-size:13px;">Reason</span>
+        <span style="color:#EF4444; font-size:13px; font-weight:700;">${failureReason || "Payment declined"}</span>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin:32px 0;">
+      <a href="https://getluckygifts.shop/store" style="
+        display:inline-block;
+        background:linear-gradient(135deg,#FFD700,#FFC107);
+        color:#000;
+        font-weight:900;
+        font-size:14px;
+        padding:14px 36px;
+        border-radius:10px;
+        text-decoration:none;
+        letter-spacing:0.05em;
+      ">🔄 Try Again</a>
+    </div>
+
+    <div style="text-align:center; padding-top:32px; border-top:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:18px; font-weight:900; color:#FFD700; margin-bottom:8px;">✦ LUCKYGIFTS ✦</div>
+      <div style="font-size:12px; color:rgba(255,255,255,0.3); line-height:1.8;">
+        getluckygifts.shop<br>
+        Need help? Contact support@getluckygifts.shop
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}

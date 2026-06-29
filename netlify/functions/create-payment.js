@@ -5,7 +5,7 @@ exports.handler = async function (event, context) {
 
   const CHAIN2PAY_API_KEY = process.env.CHAIN2PAY_API_KEY;
   const SITE_URL = process.env.URL || "https://getluckygifts.shop";
-  const MIN_AMOUNT = 35;
+  const MIN_AMOUNT = 7;
 
   if (!CHAIN2PAY_API_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: "Missing CHAIN2PAY_API_KEY" }) };
@@ -47,7 +47,7 @@ exports.handler = async function (event, context) {
       body: JSON.stringify({
         amount: numericAmount,
         currency: "USD",
-        provider: "transfi",
+        provider: "swapped",
         merchant_wallet: "0x0F07a118f607FeE58C21d0C803BE5E121CF2f636",
         callback_url: `${SITE_URL}/.netlify/functions/webhook-chain2pay`,
         return_url: `${SITE_URL}/payment/success?order=${orderId || ""}`,

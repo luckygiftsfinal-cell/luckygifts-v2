@@ -461,12 +461,13 @@ export default function AdminProducts() {
       </div>
 
       {/* table */}
-      <div className="admin-card overflow-x-auto">
+      <div className="admin-card">
         {filtered.length === 0 ? (
           <div className="py-16 text-center text-[#475569]">
             <p className="text-sm">No products found</p>
           </div>
         ) : (
+          <div className="table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
@@ -563,6 +564,7 @@ export default function AdminProducts() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

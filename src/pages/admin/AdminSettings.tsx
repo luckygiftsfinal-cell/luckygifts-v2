@@ -41,6 +41,9 @@ interface AppSettings {
   // Security
   two_factor_enabled: boolean;
   email_notifications: boolean;
+
+  // Chain2Pay
+  chain2pay_provider: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -72,6 +75,8 @@ const DEFAULT_SETTINGS: AppSettings = {
 
   two_factor_enabled: false,
   email_notifications: true,
+
+  chain2pay_provider: "transfi",
 };
 
 export default function AdminSettings() {
@@ -127,6 +132,13 @@ export default function AdminSettings() {
         .upsert(entries, { onConflict: "key" });
 
       if (error) throw error;
+
+      // حفظ الـ provider في جدول settings المخصص لـ Netlify Functions
+      const { error: providerError } = await supabase
+        .from("settings")
+        .upsert({ key: "chain2pay_provider", value: settings.chain2pay_provider }, { onConflict: "key" });
+
+      if (providerError) throw providerError;
 
       toast.success("Settings saved successfully");
     } catch (error: any) {
@@ -556,6 +568,69 @@ export default function AdminSettings() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Chain2Pay Provider */}
+        <div className="admin-card lg:col-span-2">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-[#10B981]/20 flex items-center justify-center">
+              <CreditCard size={20} className="text-[#10B981]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Chain2Pay Provider</h3>
+              <p className="text-xs text-[#64748b]">Select the active payment provider for crypto checkout</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {[
+              { name: "transfi",        label: "TransFi",              min: "$30", active: true },
+              { name: "swapped",        label: "Swapped",              min: "$5",  active: true },
+              { name: "multi-provider", label: "Multi-Provider",       min: "$6",  active: true },
+              { name: "coinbase",       label: "Coinbase",             min: "$10", active: true },
+              { name: "moonpay",        label: "MoonPay",              min: "$20", active: true },
+              { name: "transak",        label: "Transak",              min: "$6",  active: true },
+              { name: "binance",        label: "Binance",              min: "$15", active: true },
+              { name: "guardarian",     label: "Guardarian",           min: "$20", active: true },
+              { name: "ramp_network",   label: "Ramp Network",         min: "$5",  active: true },
+              { name: "topper",         label: "Topper",               min: "$10", active: true },
+              { name: "mercuryo",       label: "Mercuryo",             min: "$30", active: false },
+              { name: "unlimit",        label: "Unlimit",              min: "$12", active: false },
+              { name: "alchemy_pay",    label: "Alchemy Pay",          min: "$15", active: false },
+              { name: "kryptonim",      label: "Kryptonim",            min: "$5",  active: false },
+              { name: "simplex",        label: "Simplex",              min: "$58", active: false },
+              { name: "blockchain_com", label: "Blockchain.com",       min: "$15", active: false },
+              { name: "crypto_com",     label: "Crypto.com",           min: "$5",  active: false },
+            ].map((p) => {
+              const isSelected = settings.chain2pay_provider === p.name;
+              return (
+                <button
+                  key={p.name}
+                  onClick={() => updateSetting("chain2pay_provider", p.name)}
+                  className={`relative p-3 rounded-xl border text-left transition-all ${
+                    isSelected
+                      ? "border-[#10B981] bg-[#10B981]/10"
+                      : "border-white/10 bg-white/5 hover:border-white/20"
+                  }`}
+                >
+                  {!p.active && (
+                    <span className="absolute top-2 right-2 text-[9px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-full font-medium">
+                      MAINT
+                    </span>
+                  )}
+                  {isSelected && (
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#10B981]" />
+                  )}
+                  <p className="text-sm font-medium text-white">{p.label}</p>
+                  <p className="text-xs text-[#64748b] mt-0.5">Min {p.min}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="mt-4 text-xs text-[#475569]">
+            Currently active: <span className="text-[#10B981] font-semibold">{settings.chain2pay_provider}</span>
+          </p>
         </div>
 
         {/* Save Button */}

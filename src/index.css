@@ -222,6 +222,8 @@ body {
   color: #e2e8f0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* ✅ FIX: prevent horizontal scroll on mobile */
+  width: 100%;
 }
 
 .font-arabic {
@@ -518,6 +520,12 @@ body {
 }
 
 /* Table */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* ✅ FIX: smooth scroll on iOS */
+  width: 100%;
+}
+
 .data-table {
   width: 100%;
   border-collapse: separate;
@@ -1007,6 +1015,7 @@ body {
 @media (max-width: 480px) {
   .product-grid {
     grid-template-columns: 1fr;
+    gap: 0.75rem; /* ✅ FIX: tighter gap on small phones */
   }
 }
 
@@ -1043,6 +1052,12 @@ body {
 @media (max-width: 768px) {
   .container-custom {
     padding: 0 1.25rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .container-custom {
+    padding: 0 0.875rem; /* ✅ FIX: tighter on very small screens */
   }
 }
 
@@ -1107,6 +1122,20 @@ body {
   pointer-events: none;
 }
 
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: auto;
+    padding: 3.5rem 0 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    min-height: auto;
+    padding: 2.5rem 0 2rem;
+  }
+}
+
 /* ── NEW: Countdown Timer ──────────────────────────────── */
 .countdown-box {
   background: rgba(0, 0, 0, 0.6);
@@ -1143,6 +1172,10 @@ body {
   .countdown-box {
     padding: 14px 20px;
     gap: 16px;
+    width: 100%;          /* ✅ FIX: prevent overflow */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
   }
   .countdown-item {
     min-width: 52px;
@@ -1165,6 +1198,13 @@ body {
   border-color: rgba(255, 215, 0, 0.2);
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 640px) {
+  .testimonial-card {
+    padding: 20px; /* ✅ FIX: reduce padding on mobile */
+    border-radius: 14px;
+  }
 }
 
 /* ── NEW: Navigation Improvements ────────────────────────── */
@@ -1202,6 +1242,31 @@ body {
 .nav-link:hover::after,
 .nav-link.active::after {
   width: 100%;
+}
+
+/* ✅ FIX: Disable hover transforms on touch devices (mobile) */
+@media (hover: none) and (pointer: coarse) {
+  .pc:hover {
+    transform: none;
+    border-color: rgba(255,215,0,0.12);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .pc:hover .pc__image {
+    transform: scale(1);
+  }
+  .pc:hover .pc__btn {
+    transform: none;
+    box-shadow: none;
+  }
+  .admin-card:hover {
+    transform: none;
+  }
+  .stat-card:hover {
+    transform: none;
+  }
+  .testimonial-card:hover {
+    transform: none;
+  }
 }
 
 /* ── Checkout Grid ─────────────────────────────────────── */
@@ -1252,6 +1317,14 @@ p {
   .stats-row {
     gap: 2rem;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 400px) {
+  .stats-row {
+    flex-direction: column; /* ✅ FIX: stack vertically on tiny screens */
+    gap: 1.25rem;
+    align-items: center;
   }
 }
 

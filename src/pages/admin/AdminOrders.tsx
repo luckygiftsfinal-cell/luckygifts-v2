@@ -191,7 +191,7 @@ export default function AdminOrders() {
       </div>
 
       {/* Orders Table */}
-      <div className="admin-card overflow-x-auto">
+      <div className="admin-card">
         {filteredOrders.length === 0 ? (
           <div className="py-16 text-center">
             <Package size={48} className="mx-auto text-[#475569] mb-4" />
@@ -200,6 +200,7 @@ export default function AdminOrders() {
             </p>
           </div>
         ) : (
+          <div className="table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
@@ -266,6 +267,7 @@ export default function AdminOrders() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

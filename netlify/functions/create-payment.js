@@ -47,7 +47,7 @@ exports.handler = async function (event, context) {
       body: JSON.stringify({
         amount: numericAmount,
         currency: "USD",
-        provider: "TransFi",
+        provider: "transfi",
         merchant_wallet: "0x0F07a118f607FeE58C21d0C803BE5E121CF2f636",
         callback_url: `${SITE_URL}/.netlify/functions/webhook-chain2pay`,
         return_url: `${SITE_URL}/payment/success?order=${orderId || ""}`,

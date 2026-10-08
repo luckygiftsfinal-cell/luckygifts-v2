@@ -15,7 +15,7 @@ export default function ReadyToChange() {
             Ready to Change <br /> Your Life?
           </h2>
           <p className="text-xl text-white/40 font-medium">
-            Join 248,000+ members who shop, enter, and win every week.
+            Join 248,000+ members who  enter, and win every week.
           </p>
         </div>
 

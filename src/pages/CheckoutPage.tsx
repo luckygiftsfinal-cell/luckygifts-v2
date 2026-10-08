@@ -5,13 +5,11 @@ import { useLanguage } from "../context/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import PayPalModal, { type PayPalCaptureDetails } from "../components/PayPalModal";
-import CryptoModal from "../components/CryptoModal";
+import CryptoModal, { CryptoAsset } from "../components/CryptoModal";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { useStore } from "../context/StoreContext";
 import { useCart } from "../context/CartContext";
-import { sendOrderConfirmationEmail } from "../lib/emailService";
 import { isValidPhone } from "../lib/validation";
 
 export default function CheckoutPage() {
@@ -20,7 +18,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
 
   // Read cart from CartContext (populated by addItem in ProductDetailPage)
-  const { items: cartItems, totalPrice, totalItems, totalTickets, clearCart } = useCart();
+  const { items: cartItems, totalPrice, clearCart } = useCart();
 
   const items = cartItems.map(item => ({
     ...item,
@@ -29,55 +27,22 @@ export default function CheckoutPage() {
     tickets: item.tickets?.toString(),
     mainImage: item.mainImage || (item as any).img_src,
   }));
-  const { user, isAuthenticated, isAdmin, setModalOpen, logout, earnedTickets, addTickets } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState("paypal");
+  const { user, isAuthenticated, setModalOpen } = useAuth();
+  const [paymentMethod, setPaymentMethod] = useState("crypto");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isPayPalOpen, setIsPayPalOpen] = useState(false);
-  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const [isCryptoOpen, setIsCryptoOpen] = useState(false);
-  const [paymentSettings, setPaymentSettings] = useState({
-    paypal_enabled: true,
-    stripe_enabled: false,
-    btc_enabled: false,
-    eth_enabled: false,
-    usdt_trc20_enabled: false,
-    usdt_erc20_enabled: false,
-  });
-
-  // Fetch payment settings from Supabase
-  useEffect(() => {
-    const fetchPaymentSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("app_settings")
-          .select("key, value")
-          .in("key", [
-            "paypal_enabled", "stripe_enabled", 
-            "btc_enabled", "eth_enabled", 
-            "usdt_trc20_enabled", "usdt_erc20_enabled"
-          ]);
-
-        if (error) throw error;
-
-        if (data) {
-          const settings: any = {};
-          data.forEach((row: any) => {
-            settings[row.key] = row.value === "true";
-          });
-          setPaymentSettings(prev => ({ ...prev, ...settings }));
-        }
-      } catch (err) {
-        console.error("Failed to fetch payment settings:", err);
-      }
-    };
-
-    fetchPaymentSettings();
-  }, []);
+  const [isVerifying, setIsVerifying] = useState(false);
+  // Order created on the server for the current cart + details (re-used if the customer re-opens the modal)
+  const [cryptoSession, setCryptoSession] = useState<{
+    key: string;
+    orderId: string;
+    expectedAmount: string;
+    wallets: { usdt: string; usdc: string };
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    address: "",
     phone: ""
   });
 
@@ -94,73 +59,8 @@ export default function CheckoutPage() {
   }, [isAuthenticated, user]);
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
-  const { addOrder, updateOrder, issueTickets, validatePromoCode } = useStore();
+  const { validatePromoCode } = useStore();
 
-  React.useEffect(() => {
-    // Refresh Lemon Squeezy to listen for new DOM elements if necessary
-    if ((window as any).createLemonSqueezy) {
-      (window as any).createLemonSqueezy();
-    }
-  }, []);
-
-  const handleLemonSqueezyCheckout = async () => {
-    setIsProcessing(true);
-
-    try {
-      // Save order to Supabase BEFORE redirecting to payment
-      const orderId = await addOrder({
-        user_id: user?.id,
-        full_name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        total_amount: finalTotal,
-        discount_amount: calculateDiscount(),
-        payment_method: 'credit_card',
-        status: 'pending',
-        items: items,
-        tickets_earned: totalTickets,
-        payment_details: { provider: 'lemonsqueezy' },
-        referrer_id: localStorage.getItem('luckygifts_ref') || undefined
-      } as any);
-
-      const response = await fetch("/.netlify/functions/create-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          items,
-          userName: formData.name,
-          userEmail: formData.email,
-          totalPrice: finalTotal,
-          orderId
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout");
-      }
-
-      if (data.checkoutUrl) {
-        clearCart();
-        if ((window as any).LemonSqueezy) {
-          (window as any).LemonSqueezy.Url.Open(data.checkoutUrl);
-        } else {
-          window.location.href = data.checkoutUrl;
-        }
-      }
-    } catch (error: any) {
-      console.error("Lemon Squeezy Error:", error);
-      toast.error(lang === 'AR' ? "فشل إنشاء رابط الدفع" : "Failed to create checkout link", {
-        description: error.message
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleApplyPromo = async () => {
     if (!promoInput) return;
@@ -180,20 +80,33 @@ export default function CheckoutPage() {
 
   const finalTotal = totalPrice - calculateDiscount();
 
+  const MIN_CHECKOUT_AMOUNT = 5;
+
+  const getAccessToken = async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token;
+  };
+
+  const sessionKey = JSON.stringify({
+    items: items.map((i) => [i.id, i.quantity]),
+    promo: appliedPromo?.code || null,
+    formData,
+  });
+
+  // Step 1: validate the form, ask the SERVER to create the order (prices/promo are computed there),
+  // then show the payment modal with the exact amount to send.
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ✅ Check if user is authenticated
     if (!isAuthenticated) {
       setModalOpen(true);
       toast.info(lang === 'AR' ? "يرجى تسجيل الدخول لإتمام عملية الشراء" : "Please sign in to complete your purchase");
       return;
     }
 
-    // Validation
-    if (!formData.name || !formData.email || !formData.address || !formData.phone) {
+    if (!formData.name || !formData.email || !formData.phone) {
       toast.error(lang === 'AR' ? "يرجى إكمال جميع البيانات المطلوبة" : "Please complete all required fields", {
-        description: lang === 'AR' ? "عنوان الشحن والبيانات الشخصية إلزامية" : "Shipping address and personal details are mandatory."
+        description: lang === 'AR' ? "البيانات الشخصية إلزامية" : "Personal details are mandatory."
       });
       return;
     }
@@ -205,81 +118,105 @@ export default function CheckoutPage() {
       return;
     }
 
-    setIsProcessing(true);
+    if (totalPrice < MIN_CHECKOUT_AMOUNT) {
+      toast.error(lang === 'AR' ? `الحد الأدنى للطلب $${MIN_CHECKOUT_AMOUNT}` : `Minimum order amount is $${MIN_CHECKOUT_AMOUNT}`);
+      return;
+    }
 
-    if (paymentMethod === 'paypal') {
-      // PayPal Flow - Save order as 'pending' BEFORE opening modal
-      // This ensures the order is recorded even if DB fails after payment
-      try {
-        const orderId = await addOrder({
-          user_id: user?.id,
-          full_name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          total_amount: finalTotal,
-          discount_amount: calculateDiscount(),
-          payment_method: 'paypal',
-          status: 'pending',
-          items: items,
-          tickets_earned: totalTickets,
-          referrer_id: localStorage.getItem('luckygifts_ref') || undefined
-        } as any);
-        setPendingOrderId(orderId);
-        setIsProcessing(false);
-        setIsPayPalOpen(true);
-      } catch (err) {
-        setIsProcessing(false);
-        toast.error(lang === 'AR' ? 'فشل تجهيز الطلب، يرجى المحاولة مجدداً' : 'Failed to prepare order, please try again.');
-      }
-    } else {
-      // Crypto Flow - Open Modal
-      setIsProcessing(false);
+    // Nothing changed since the order was created → just re-open the modal
+    if (cryptoSession && cryptoSession.key === sessionKey) {
       setIsCryptoOpen(true);
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error(lang === 'AR' ? "انتهت الجلسة، سجّل الدخول من جديد" : "Session expired, please sign in again");
+
+      const res = await fetch("/.netlify/functions/create-crypto-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          items: items.map((i) => ({ id: i.id, quantity: i.quantity })),
+          promoCode: appliedPromo?.code || undefined,
+          customer: formData,
+          referrerId: localStorage.getItem('luckygifts_ref') || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not create order");
+
+      setCryptoSession({ key: sessionKey, orderId: data.orderId, expectedAmount: data.expectedAmount, wallets: data.wallets });
+      setIsCryptoOpen(true);
+    } catch (err: any) {
+      toast.error(err?.message || (lang === 'AR' ? "تعذّر إنشاء الطلب" : "Could not create the order"));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleCryptoSuccess = async (txHash: string) => {
-    setIsCryptoOpen(false);
-    setIsProcessing(true);
+  const failureMessage = (reason?: string) => {
+    switch (reason) {
+      case "amount_mismatch":
+        return lang === 'AR' ? "المبلغ المستلم لا يطابق المبلغ المطلوب تماماً" : "The amount received does not match the required amount exactly";
+      case "tx_before_order":
+        return lang === 'AR' ? "هذه المعاملة أُجريت قبل إنشاء الطلب" : "This transaction was made before the order was created";
+      case "tx_failed":
+        return lang === 'AR' ? "المعاملة فشلت على الشبكة" : "The transaction failed on the network";
+      case "no_usdc_transfer_to_wallet":
+        return lang === 'AR' ? "لا توجد حوالة USDC إلى محفظتنا في هذه المعاملة" : "No USDC transfer to our wallet was found in this transaction";
+      case "order_expired":
+        return lang === 'AR' ? "انتهت صلاحية الطلب (24 ساعة)" : "This order has expired (24 hours)";
+      default:
+        return lang === 'AR' ? "فشل التحقق من الدفع، تأكد من المبلغ والشبكة" : "Payment could not be verified. Check the amount and network.";
+    }
+  };
+
+  // Step 2: the customer pasted the TXID → the server verifies it on-chain and finalizes the order.
+  const handleSubmitTx = async (txHash: string, asset: CryptoAsset) => {
+    if (!cryptoSession) return;
+    setIsVerifying(true);
     try {
-      const orderId = await addOrder({
-        user_id: user?.id,
-        full_name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        total_amount: finalTotal,
-        discount_amount: calculateDiscount(),
-        payment_method: 'crypto',
-        status: 'pending_verification', // New status for crypto
-        items: items,
-        tickets_earned: totalTickets,
-        payment_details: { txHash },
-        referrer_id: localStorage.getItem('luckygifts_ref') || undefined
-      } as any);
+      const token = await getAccessToken();
+      if (!token) throw new Error(lang === 'AR' ? "انتهت الجلسة، سجّل الدخول من جديد" : "Session expired, please sign in again");
 
-      if (user?.id && orderId) {
-        const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
+      toast.info(lang === 'AR' ? "جارٍ التحقق من الدفع على البلوكتشين..." : "Verifying your payment on-chain...");
 
-        await sendOrderConfirmationEmail({
-          toEmail: formData.email,
-          userName: formData.name,
-          orderId: orderId,
-          totalAmount: totalPrice.toString(),
-          items: items,
-          tickets: ticketCodes
+      let status = "pending";
+      let reason: string | undefined;
+      for (let i = 0; i < 18 && status === "pending"; i++) {
+        const res = await fetch("/.netlify/functions/verify-crypto-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ orderId: cryptoSession.orderId, txHash, asset }),
         });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Verification failed");
+        status = data.status;
+        reason = data.reason;
+        if (status === "pending") await new Promise((r) => setTimeout(r, 10000));
       }
 
-      await addTickets(totalTickets);
-      setIsProcessing(false);
-      toast.success(lang === 'AR' ? "تم إرسال طلب الدفع. بانتظار التأكيد." : "Payment submitted. Waiting for verification.");
+      if (status === "invalid") {
+        toast.error(failureMessage(reason));
+        return; // keep the modal open so the customer can fix the hash
+      }
+
+      if (status === "paid") {
+        toast.success(lang === 'AR' ? "تم تأكيد الدفع!" : "Payment confirmed!");
+      } else {
+        toast.info(lang === 'AR' ? "لم تتأكد المعاملة بعد. سنفعّل طلبك فور تأكيدها." : "Transaction not confirmed yet. Your order will be activated once it is.");
+      }
+
+      const orderId = cryptoSession.orderId;
+      setIsCryptoOpen(false);
       clearCart();
-      navigate("/");
-    } catch (err) {
-      setIsProcessing(false);
-      toast.error("Failed to save order");
+      navigate(`/payment/success?order=${orderId}`);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to process crypto payment");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -325,7 +262,7 @@ export default function CheckoutPage() {
                 <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center text-[#FFD700]">
                   <User size={20} />
                 </div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("shippingDetails")}</h3>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">{lang === 'AR' ? "البيانات الشخصية" : "Personal Details"}</h3>
               </div>
 
               <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -346,16 +283,6 @@ export default function CheckoutPage() {
                     placeholder="john@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-[#111111] border border-white/25 rounded-xl py-4 px-4 text-base text-white focus:outline-none focus:border-[#FFD700] focus:bg-[#1a1a1a] transition-all placeholder:text-white/30 placeholder:text-base"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">{t("shippingAddress")} <span className="text-[#FFD700]">*</span></label>
-                  <input
-                    type="text"
-                    placeholder="123 Luxury Ave, Dubai, UAE"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full bg-[#111111] border border-white/25 rounded-xl py-4 px-4 text-base text-white focus:outline-none focus:border-[#FFD700] focus:bg-[#1a1a1a] transition-all placeholder:text-white/30 placeholder:text-base"
                   />
                 </div>
@@ -387,10 +314,7 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                 {[
-                  ...(paymentSettings.paypal_enabled ? [{ id: "paypal", name: "PayPal", icon: <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" className="h-3 grayscale brightness-200" /> }] : []),
-                  ...(paymentSettings.stripe_enabled ? [{ id: "stripe", name: "Credit Card", icon: <CreditCard size={18} /> }] : []),
-                  ...((paymentSettings.btc_enabled || paymentSettings.eth_enabled || paymentSettings.usdt_trc20_enabled || paymentSettings.usdt_erc20_enabled) 
-                    ? [{ id: "crypto", name: "Crypto", icon: <Wallet size={18} /> }] : [])
+                  { id: "crypto", name: lang === 'AR' ? "كريبتو" : "Crypto", icon: <Wallet size={18} /> }
                 ].map((method) => (
                   <button
                     key={method.id}
@@ -409,7 +333,7 @@ export default function CheckoutPage() {
 
               <div className="space-y-6">
                 <div className="flex items-start gap-4 p-5 bg-white/5 border border-white/10 rounded-2xl">
-                  {paymentMethod === 'paypal' ? <ShieldCheck className="text-[#00C853] shrink-0 mt-1" size={20} /> : <ShieldCheck className="text-[#00C853] shrink-0 mt-1" size={20} />}
+                  <ShieldCheck className="text-[#00C853] shrink-0 mt-1" size={20} />
                   <div className="space-y-1">
                     <p className="text-xs text-white/80 font-bold uppercase tracking-wide">{t("secureTransaction")}</p>
                     <p className="text-[10px] text-white/40 font-medium leading-relaxed">
@@ -471,10 +395,6 @@ export default function CheckoutPage() {
                       <span>-{formatPrice(calculateDiscount())}</span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center text-white/40 text-xs font-black uppercase tracking-widest mt-2">
-                    <span>{t("shipping")}</span>
-                    <span className="text-[#00C853]">{t("free")}</span>
-                  </div>
                   <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
                     <span className="text-sm font-black text-white uppercase tracking-widest">{t("total")}</span>
                     <span className="text-2xl font-black text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.3)]">{formatPrice(finalTotal)}</span>
@@ -534,66 +454,16 @@ export default function CheckoutPage() {
             </div>
           </div>
         </div>
-        <PayPalModal
-          isOpen={isPayPalOpen}
-          onClose={() => setIsPayPalOpen(false)}
-          amount={formatPrice(totalPrice)}
-          onSuccess={async (captureDetails: PayPalCaptureDetails) => {
-            setIsPayPalOpen(false);
-            toast.success(lang === 'AR' ? "تم الدفع بنجاح!" : "Payment successful!");
-            try {
-              // Order was saved as 'pending' before modal opened.
-              // Now update it to 'paid' and store verified capture details.
-              const orderId = pendingOrderId;
-              if (!orderId) throw new Error("Missing pending order ID");
-
-              await updateOrder({
-                id: orderId,
-                status: 'paid',
-                payment_details: {
-                  provider:        'paypal',
-                  capture_id:      captureDetails.captureID,
-                  paypal_order_id: captureDetails.paypalOrderID,
-                  payer_email:     captureDetails.payerEmail,
-                  payer_name:      captureDetails.payerName,
-                  captured_amount: captureDetails.capturedAmount,
-                  currency:        captureDetails.capturedCurrency,
-                  verified_server: true,
-                },
-              } as any);
-
-              if (user?.id) {
-                const ticketCodes = await issueTickets(orderId, user.id, totalTickets);
-
-                await sendOrderConfirmationEmail({
-                  toEmail:     formData.email,
-                  userName:    formData.name,
-                  orderId:     orderId,
-                  totalAmount: totalPrice.toString(),
-                  items:       items,
-                  tickets:     ticketCodes,
-                });
-              }
-
-              await addTickets(totalTickets);
-              setPendingOrderId(null);
-              clearCart();
-              navigate("/");
-            } catch (err) {
-              toast.error(
-                lang === 'AR'
-                  ? "تم الدفع لكن فشل تحديث الطلب، تواصل مع الدعم"
-                  : "Payment received but order update failed. Please contact support."
-              );
-            }
-          }}
-        />
-        <CryptoModal
-          isOpen={isCryptoOpen}
-          onClose={() => setIsCryptoOpen(false)}
-          onSuccess={handleCryptoSuccess}
-          amount={formatPrice(totalPrice)}
-        />
+        {cryptoSession && (
+          <CryptoModal
+            isOpen={isCryptoOpen}
+            onClose={() => setIsCryptoOpen(false)}
+            onSubmit={handleSubmitTx}
+            expectedAmount={cryptoSession.expectedAmount}
+            wallets={cryptoSession.wallets}
+            isVerifying={isVerifying}
+          />
+        )}
       </div>
     </div>
   );

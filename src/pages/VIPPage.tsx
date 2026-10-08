@@ -19,7 +19,9 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
   const navigate = useNavigate();
   const { isAuthenticated, setModalOpen } = useAuth();
   const { addItem, items } = useCart();
-  const isAdded = items.some(item => item.id === pkg.id);
+  // Prefixed so a VIP package id can never collide with a product id (server strips the prefix)
+  const cartId = `vip_${pkg.id}`;
+  const isAdded = items.some(item => item.id === cartId);
 
   // ✅ استخدام tickets_count من قاعدة البيانات (من StoreContext)
   const entriesCount = pkg.tickets_count?.toString() || '0';
@@ -43,7 +45,7 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
     }
     if (!isAdded) {
       addItem({
-        id: pkg.id,
+        id: cartId,
         title: pkg.name,
         price: pkg.price.toString(),
         mainImage: "/images/prize_luxury.png",
@@ -54,37 +56,6 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
       });
     }
     setTimeout(() => navigate("/checkout"), 300);
-  };
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handlePayment = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/.netlify/functions/create-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: pkg.price,
-          packageName: pkg.name,
-          packageId: pkg.id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data?.payment_url) {
-        window.location.href = data.payment_url;
-      } else {
-        alert("Something went wrong. Please try again.");
-        console.error("Chain2pay response:", data);
-      }
-    } catch (err) {
-      alert("Connection error. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const Icon = ICON_MAP[pkg.icon] || Star;
@@ -221,18 +192,16 @@ const VIPCard = ({ pkg }: { pkg: any }) => {
         </ul>
 
         <button
-          onClick={handlePayment}
+          onClick={handleSelect}
           className="btn-primary"
-          disabled={isLoading}
           style={{
             width: "100%",
             justifyContent: "center",
-            opacity: isLoading ? 0.7 : 1,
-            cursor: isLoading ? "not-allowed" : "pointer",
+            cursor: "pointer",
           }}
         >
           <Zap size={20} />
-          {isLoading ? "Processing..." : "START NOW"}
+          START NOW
         </button>
       </div>
     </motion.div>

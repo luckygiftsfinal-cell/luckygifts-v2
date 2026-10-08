@@ -1,54 +1,26 @@
-const { createClient } = require("@supabase/supabase-js");
+// netlify/functions/get-payment-details.js
+// Returns an order (+ tickets/library) ONLY to the user who owns it.
+const { json, getSupabase, authUser } = require("./_shared/common");
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-exports.handler = async function (event) {
-  if (event.httpMethod !== "GET") {
-    return { statusCode: 405, body: JSON.stringify({ error: "Method Not Allowed" }) };
-  }
+exports.handler = async (event) => {
+  if (event.httpMethod !== "GET") return json(405, { error: "Method Not Allowed" });
+
+  const supabase = getSupabase();
+  if (!supabase) return json(500, { error: "Server not configured" });
+
+  const user = await authUser(supabase, event);
+  if (!user) return json(401, { error: "Not authenticated" });
 
   const orderId = event.queryStringParameters?.orderId;
-  if (!orderId) {
-    return { statusCode: 400, body: JSON.stringify({ error: "Missing orderId" }) };
-  }
+  if (!orderId || !UUID_RE.test(orderId)) return json(400, { error: "Missing or invalid orderId" });
 
-  try {
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .single();
+  const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+  if (!order || order.user_id !== user.id) return json(404, { error: "Order not found" });
 
-    if (orderError || !order) {
-      return { statusCode: 404, body: JSON.stringify({ error: "Order not found" }) };
-    }
+  const { data: tickets } = await supabase.from("tickets").select("*").eq("order_id", orderId);
+  const { data: library } = await supabase.from("user_library").select("*").eq("order_id", orderId);
 
-    const { data: tickets } = await supabase
-      .from("tickets")
-      .select("*")
-      .eq("order_id", orderId);
-
-    const { data: library } = await supabase
-      .from("user_library")
-      .select("*")
-      .eq("order_id", orderId);
-
-    return {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        order,
-        tickets: tickets || [],
-        library: library || [],
-      }),
-    };
-  } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-  }
+  return json(200, { order, tickets: tickets || [], library: library || [] });
 };

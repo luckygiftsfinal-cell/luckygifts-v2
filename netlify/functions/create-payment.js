@@ -7,6 +7,9 @@ exports.handler = async function (event, context) {
   const SITE_URL = process.env.URL || "https://getluckygifts.shop";
   const MIN_AMOUNT = 35;
 
+  // ✅ العملات الرقمية المسموح بها فقط
+  const ALLOWED_CRYPTO = ["USDT", "USDC"];
+
   if (!CHAIN2PAY_API_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: "Missing CHAIN2PAY_API_KEY" }) };
   }
@@ -18,10 +21,20 @@ exports.handler = async function (event, context) {
     return { statusCode: 400, body: JSON.stringify({ error: "Invalid request body" }) };
   }
 
-  const { amount, packageName, packageId, customerEmail, customerName, orderId, productType } = body;
+  const { amount, packageName, packageId, customerEmail, customerName, orderId, productType, cryptoCurrency } = body;
 
   if (!amount || !packageName) {
     return { statusCode: 400, body: JSON.stringify({ error: "Missing required fields" }) };
+  }
+
+  // ✅ العملة الرقمية: افتراضي USDT إذا لم تُحدد
+  const crypto = (cryptoCurrency || "USDT").toUpperCase().trim();
+
+  if (!ALLOWED_CRYPTO.includes(crypto)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: `Only ${ALLOWED_CRYPTO.join(" and ")} are accepted` }),
+    };
   }
 
   const numericAmount = parseFloat(amount);
@@ -49,6 +62,10 @@ exports.handler = async function (event, context) {
         currency: "USD",
         provider: "transfi",
         merchant_wallet: "0x0F07a118f607FeE58C21d0C803BE5E121CF2f636",
+        // ✅ قيد الدفع بالعملة الرقمية المختارة فقط (USDT / USDC)
+        // ملاحظة: تأكد من اسم الحقل في توثيق Chain2Pay لديك
+        // (قد يكون: crypto_currency / payment_currency / token / coin)
+        crypto_currency: crypto,
         callback_url: `${SITE_URL}/.netlify/functions/webhook-chain2pay`,
         return_url: `${SITE_URL}/payment/success?order=${orderId || ""}`,
         metadata: {
@@ -58,6 +75,7 @@ exports.handler = async function (event, context) {
           customer_email: customerEmail || "",
           customer_name: customerName || "",
           product_type: productType || "tickets",
+          crypto_currency: crypto,
         },
       }),
     });
@@ -85,7 +103,7 @@ exports.handler = async function (event, context) {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({ payment_url: paymentUrl }),
+      body: JSON.stringify({ payment_url: paymentUrl, crypto_currency: crypto }),
     };
   } catch (error) {
     return { statusCode: 500, body: JSON.stringify({ error: error.message || "Internal server error" }) };

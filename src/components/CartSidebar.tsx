@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight, Loader2 } from "lucide-react";
+import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -8,18 +8,19 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useLanguage } from "../context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 
+const MIN_CHECKOUT_AMOUNT = 5;
+
 export default function CartSidebar() {
   const { items, isCartOpen, setIsCartOpen, removeItem, updateQuantity, totalPrice, totalItems } = useCart();
   const { formatPrice } = useCurrency();
   const { lang } = useLanguage();
-  const { isAuthenticated, setModalOpen } = useAuth();
+  const { isAuthenticated, setModalOpen, user } = useAuth();
   const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCheckout = async () => {
-    // ✅ Check if user is authenticated
+  const handleCheckout = () => {
+    // Must be signed in
     if (!isAuthenticated) {
       setIsCartOpen(false);
       setModalOpen(true);
@@ -27,35 +28,20 @@ export default function CartSidebar() {
       return;
     }
 
-    // ✅ User is authenticated → proceed to payment gateway
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Build order name from cart items
-      const packageName = items.map(i => `${i.title} x${i.quantity}`).join(", ");
-
-      const res = await fetch("/.netlify/functions/create-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: totalPrice.toFixed(2),
-          packageName,
-          packageId: items.map(i => i.id).join(","),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.payment_url) {
-        throw new Error(data.error || "Failed to create payment");
-      }
-
-      // Redirect directly to payment gateway
-      window.location.href = data.payment_url;
-    } catch (err: any) {
-      setError(lang === "AR" ? "فشل في إنشاء الدفع، حاول مرة أخرى" : "Payment failed, please try again");
-      setIsLoading(false);
+    // Minimum order (also enforced again on the server)
+    if (totalPrice < MIN_CHECKOUT_AMOUNT) {
+      setError(
+        lang === "AR"
+          ? `الحد الأدنى للطلب $${MIN_CHECKOUT_AMOUNT}`
+          : `Minimum order amount is $${MIN_CHECKOUT_AMOUNT}`
+      );
+      return;
     }
+
+    // Go to the checkout page, where the customer pays with USDT or USDC
+    setError(null);
+    setIsCartOpen(false);
+    navigate("/checkout");
   };
 
   return (
@@ -140,7 +126,7 @@ export default function CartSidebar() {
                           {item.tickets} {lang === 'AR' ? 'تذاكر' : 'Tickets'}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 bg-white/5 rounded-lg p-1 border border-white/10">
                           <button 
@@ -172,25 +158,20 @@ export default function CartSidebar() {
                   <span>{lang === 'AR' ? 'المجموع الفرعي' : 'Subtotal'}</span>
                   <span className="text-white text-lg">{formatPrice(totalPrice)}</span>
                 </div>
-                
+
                 <button 
                   onClick={handleCheckout}
-                  disabled={isLoading}
                   className="w-full py-4 bg-[#FFD700] text-black font-black uppercase tracking-widest text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-[#f0d060] transition-all group shadow-xl shadow-[#FFD700]/10 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? (
-                    <><Loader2 size={18} className="animate-spin" /> {lang === 'AR' ? 'جاري التحويل...' : 'Redirecting...'}</>
-                  ) : (
-                    <>{lang === 'AR' ? 'إتمام الشراء' : 'Checkout Now'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
-                  )}
+                  <>{lang === 'AR' ? 'إتمام الشراء' : 'Checkout Now'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
                 </button>
 
                 {error && (
                   <p className="text-red-400 text-xs text-center font-bold">{error}</p>
                 )}
-                
+
                 <p className="text-[10px] text-white/20 text-center font-bold uppercase tracking-widest">
-                  {lang === 'AR' ? 'الأسعار تشمل ضريبة القيمة المضافة' : 'Taxes and shipping calculated at checkout'}
+                  {lang === 'AR' ? 'الدفع بالعملات الرقمية فقط' : 'Crypto payments only'}
                 </p>
               </div>
             )}

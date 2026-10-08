@@ -58,6 +58,7 @@ const AdminPromoCodes = lazy(() => import("./pages/admin/AdminPromoCodes"));
 const AdminApplications = lazy(() => import("./pages/admin/AdminApplications"));
 const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
 const AdminPaymentsPage = lazy(() => import("./pages/admin/AdminPaymentsPage"));
+const AdminWallets = lazy(() => import("./pages/admin/AdminWallets"));
 
 // Loading Component
 const PageLoader = () => (
@@ -191,6 +192,7 @@ export default function App() {
                     <Route path="applications" element={<AdminApplications />} />
                     <Route path="events" element={<AdminEvents />} />
                     <Route path="payments" element={<AdminPaymentsPage />} />
+                    <Route path="wallets" element={<AdminWallets />} />
                   </Route>
 
                   <Route path="*" element={

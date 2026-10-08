@@ -1,122 +1,132 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, X, Copy, CheckCircle, QrCode } from "lucide-react";
+import { Shield, X, Copy, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "../lib/supabase";
+
+export type CryptoAsset = "USDT_TRC20" | "USDC_POLYGON";
 
 interface CryptoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (txHash: string) => void;
-  amount: string;
+  /** Called with the TXID the customer pasted. The parent verifies it on the server. */
+  onSubmit: (txHash: string, asset: CryptoAsset) => void;
+  /** EXACT amount the customer must send, as returned by the server (e.g. "35.037"). */
+  expectedAmount: string;
+  /** Wallet addresses as returned by the server. */
+  wallets: { usdt: string; usdc: string };
+  isVerifying: boolean;
 }
 
-const DEFAULT_WALLETS = [
-  { name: "USDT (TRC20)", address: "TEcCaGi7z51v4taCHDu1paQd1zDDN5u3Es", network: "TRON", icon: "https://cryptologos.cc/logos/tether-usdt-logo.png" },
-  { name: "Bitcoin (BTC)", address: "bc1pcevr5z4ue43un5utj6alwez9htrxm35szt00uap9hk0j6f7gpkwqcdzvhq", network: "Bitcoin", icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
-  { name: "Ethereum (ETH)", address: "0x059331956f319F4895D176F9CC8F6c79a76E2EDe", network: "ERC20", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png" }
-];
+const HASH_FORMAT: Record<CryptoAsset, RegExp> = {
+  USDT_TRC20: /^[0-9a-fA-F]{64}$/,
+  USDC_POLYGON: /^0x[0-9a-fA-F]{64}$/,
+};
 
-export default function CryptoModal({ isOpen, onClose, onSuccess, amount }: CryptoModalProps) {
-  const [wallets, setWallets] = useState(DEFAULT_WALLETS);
-  const [selectedWallet, setSelectedWallet] = useState(DEFAULT_WALLETS[0]);
+export default function CryptoModal({ isOpen, onClose, onSubmit, expectedAmount, wallets, isVerifying }: CryptoModalProps) {
+  const options: { id: CryptoAsset; coin: string; name: string; address: string; network: string; icon: string }[] = [
+    { id: "USDT_TRC20", coin: "USDT", name: "USDT (TRC20)", address: wallets.usdt, network: "TRON (TRC20)", icon: "https://cryptologos.cc/logos/tether-usdt-logo.png" },
+    { id: "USDC_POLYGON", coin: "USDC", name: "USDC (Polygon)", address: wallets.usdc, network: "Polygon", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png" },
+  ];
+
+  const [selectedId, setSelectedId] = useState<CryptoAsset>("USDT_TRC20");
   const [txHash, setTxHash] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"" | "address" | "amount">("");
 
   useEffect(() => {
-    if (!isOpen) return;
-    supabase.from('app_settings').select('value').eq('key', 'crypto_wallets').single()
-      .then(({ data }) => {
-        if (data?.value) {
-          try {
-            const saved = JSON.parse(data.value);
-            const merged = [
-              { ...DEFAULT_WALLETS[0], address: saved.usdt || DEFAULT_WALLETS[0].address },
-              { ...DEFAULT_WALLETS[1], address: saved.btc || DEFAULT_WALLETS[1].address },
-              { ...DEFAULT_WALLETS[2], address: saved.eth || DEFAULT_WALLETS[2].address },
-            ];
-            setWallets(merged);
-            setSelectedWallet(merged[0]);
-          } catch {}
-        }
-      });
+    if (!isOpen) setTxHash("");
   }, [isOpen]);
 
-  const copyToClipboard = (text: string) => {
+  const selected = options.find((o) => o.id === selectedId)!;
+
+  const copy = (text: string, what: "address" | "amount") => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    toast.success("Address copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
+    setCopied(what);
+    toast.success(what === "address" ? "Address copied" : "Amount copied");
+    setTimeout(() => setCopied(""), 2000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (txHash.length < 10) { toast.error("Please enter a valid Transaction Hash (TXID)"); return; }
-    onSuccess(txHash);
+    const hash = txHash.trim();
+    if (!HASH_FORMAT[selectedId].test(hash)) {
+      toast.error("Invalid Transaction Hash (TXID) for " + selected.name);
+      return;
+    }
+    onSubmit(hash, selectedId);
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/90 backdrop-blur-md" />
-          <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-[480px] bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={isVerifying ? undefined : onClose} className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+          <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-[480px] max-h-[95vh] overflow-y-auto bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl flex flex-col">
             <div className="bg-gradient-to-r from-[#FFD700]/20 to-transparent p-6 border-b border-white/5">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-black text-white uppercase tracking-tight">Crypto Payment</h3>
-                  <p className="text-[10px] text-[#FFD700] font-bold uppercase tracking-[0.2em]">Secure Blockchain Transaction</p>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight">Pay with Crypto</h3>
+                  <p className="text-[10px] text-[#FFD700] font-bold uppercase tracking-[0.2em]">Verified automatically on-chain</p>
                 </div>
-                <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={24} /></button>
+                <button onClick={onClose} disabled={isVerifying} className="text-white/40 hover:text-white transition-colors disabled:opacity-30"><X size={24} /></button>
               </div>
             </div>
 
             <div className="p-8 space-y-6">
-              <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Total to Send</p>
-                <div className="text-3xl font-black text-[#FFD700]">{amount}</div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {wallets.map((wallet) => (
-                  <button key={wallet.name} onClick={() => setSelectedWallet(wallet)}
-                    className={`p-3 rounded-xl border transition-all flex flex-col items-center gap-2 ${selectedWallet.name === wallet.name ? "bg-[#FFD700]/10 border-[#FFD700]" : "bg-white/5 border-white/5 hover:border-white/20"}`}>
-                    <img src={wallet.icon} alt={wallet.name} className="w-8 h-8 rounded-full" />
-                    <span className="text-[10px] font-black text-white uppercase">{wallet.name.split(" ")[0]}</span>
+              <div className="grid grid-cols-2 gap-3">
+                {options.map((o) => (
+                  <button key={o.id} type="button" disabled={isVerifying} onClick={() => setSelectedId(o.id)}
+                    className={`p-3 rounded-xl border transition-all flex flex-col items-center gap-2 disabled:opacity-60 ${selectedId === o.id ? "bg-[#FFD700]/10 border-[#FFD700]" : "bg-white/5 border-white/5 hover:border-white/20"}`}>
+                    <img src={o.icon} alt={o.name} className="w-8 h-8 rounded-full" />
+                    <span className="text-[10px] font-black text-white uppercase">{o.name}</span>
                   </button>
                 ))}
               </div>
 
-              <div className="space-y-4">
-                <div className="bg-black border border-white/5 rounded-2xl p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] text-white/20 font-black uppercase tracking-widest">{selectedWallet.network} Address</span>
-                    <button onClick={() => copyToClipboard(selectedWallet.address)} className="text-[#FFD700] hover:scale-110 transition-transform">
-                      {copied ? <CheckCircle size={18} /> : <Copy size={18} />}
-                    </button>
-                  </div>
-                  <p className="text-sm font-mono text-white break-all pr-8">{selectedWallet.address}</p>
+              <div className="bg-white/5 rounded-2xl p-6 text-center border border-[#FFD700]/30">
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Send exactly</p>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="text-3xl font-black text-[#FFD700]">{expectedAmount} {selected.coin}</div>
+                  <button type="button" onClick={() => copy(expectedAmount, "amount")} className="text-[#FFD700] hover:scale-110 transition-transform">
+                    {copied === "amount" ? <CheckCircle size={18} /> : <Copy size={18} />}
+                  </button>
                 </div>
-                <div className="flex items-center justify-center p-4 bg-white rounded-2xl w-32 h-32 mx-auto">
-                  <QrCode size={100} className="text-black" />
+                <p className="text-[10px] text-white/40 mt-2 leading-relaxed">
+                  The last decimals identify your order. The amount must match exactly, and network fees must be paid on top by you.
+                </p>
+              </div>
+
+              <div className="flex items-start gap-3 bg-[#FFD700]/5 border border-[#FFD700]/20 rounded-xl p-3">
+                <AlertTriangle size={16} className="text-[#FFD700] shrink-0 mt-0.5" />
+                <p className="text-[11px] text-white/70 leading-relaxed">
+                  Send only <b>{selected.name}</b> on the <b>{selected.network}</b> network. Other coins or networks cannot be recovered.
+                </p>
+              </div>
+
+              <div className="bg-black border border-white/5 rounded-2xl p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] text-white/20 font-black uppercase tracking-widest">{selected.network} Address</span>
+                  <button type="button" onClick={() => copy(selected.address, "address")} className="text-[#FFD700] hover:scale-110 transition-transform">
+                    {copied === "address" ? <CheckCircle size={18} /> : <Copy size={18} />}
+                  </button>
                 </div>
+                <p className="text-sm font-mono text-white break-all pr-8">{selected.address}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] text-white/40 font-black uppercase tracking-widest ml-1">Transaction Hash (TXID)</label>
-                  <input required type="text" placeholder="Paste your transaction ID here..." value={txHash} onChange={(e) => setTxHash(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white focus:border-[#FFD700]/50 outline-none transition-all placeholder:text-white/20" />
+                  <label className="text-[10px] text-white/40 font-black uppercase tracking-widest ml-1">Transaction Hash (TXID) — after sending</label>
+                  <input required disabled={isVerifying} type="text" placeholder="Paste your transaction ID here..." value={txHash} onChange={(e) => setTxHash(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white focus:border-[#FFD700]/50 outline-none transition-all placeholder:text-white/20 disabled:opacity-60" />
                 </div>
-                <button type="submit" className="w-full bg-[#FFD700] hover:bg-[#f0d060] text-black font-black py-4 rounded-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2">
-                  <CheckCircle size={18} /> Confirm Payment
+                <button type="submit" disabled={isVerifying} className="w-full bg-[#FFD700] hover:bg-[#f0d060] text-black font-black py-4 rounded-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  {isVerifying ? <><Loader2 size={18} className="animate-spin" /> Verifying on-chain...</> : <><CheckCircle size={18} /> Verify Payment</>}
                 </button>
               </form>
             </div>
 
             <div className="bg-white/5 p-4 text-center border-t border-white/5">
               <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-white/20 uppercase tracking-widest">
-                <Shield size={12} /> Payments are verified manually by our team
+                <Shield size={12} /> Payments are verified on the blockchain
               </div>
             </div>
           </motion.div>

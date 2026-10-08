@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
-import { Ticket, BookOpen, Download, Calendar, Package, AlertCircle, Loader2, ExternalLink, Copy, CheckCircle, ChevronRight } from "lucide-react";
+import { Ticket, BookOpen, Package, AlertCircle, Loader2, ExternalLink, Copy, CheckCircle, ChevronRight } from "lucide-react";
 
 interface TicketData {
   id: string;
@@ -10,16 +10,6 @@ interface TicketData {
   package_name: string;
   draw_date: string;
   status: string;
-  created_at: string;
-  order_id: string;
-}
-
-interface LibraryItem {
-  id: string;
-  product_name: string;
-  file_path: string;
-  download_url: string;
-  expires_at: string;
   created_at: string;
   order_id: string;
 }
@@ -35,13 +25,11 @@ interface OrderData {
 export default function MyLibraryPage() {
   const { user } = useAuth();
   const [tickets, setTickets] = useState<TicketData[]>([]);
-  const [library, setLibrary] = useState<LibraryItem[]>([]);
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"tickets" | "ebooks" | "orders">("tickets");
+  const [activeTab, setActiveTab] = useState<"tickets" | "orders">("tickets");
   const [copiedTicket, setCopiedTicket] = useState<string | null>(null);
-  const [downloadingEbook, setDownloadingEbook] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -55,26 +43,21 @@ export default function MyLibraryPage() {
       setError("");
 
       // Fetch directly from Supabase (no API needed)
-      const [ticketsRes, libraryRes, ordersRes] = await Promise.all([
+      const [ticketsRes, ordersRes] = await Promise.all([
         supabase.from("tickets").select("*").eq("user_id", user?.id).eq("status", "active").order("created_at", { ascending: false }),
-        supabase.from("user_library").select("*").eq("user_id", user?.id).order("created_at", { ascending: false }),
         supabase.from("orders").select("*").eq("user_id", user?.id).order("created_at", { ascending: false }),
       ]);
 
       if (ticketsRes.error) console.error("Tickets error:", ticketsRes.error);
-      if (libraryRes.error) console.error("Library error:", libraryRes.error);
       if (ordersRes.error) console.error("Orders error:", ordersRes.error);
 
       const ticketsData = ticketsRes.data || [];
-      const libraryData = libraryRes.data || [];
       const ordersData = ordersRes.data || [];
 
       console.log("Fetched tickets:", ticketsData.length, ticketsData);
-      console.log("Fetched library:", libraryData.length);
       console.log("Fetched orders:", ordersData.length);
 
       setTickets(ticketsData);
-      setLibrary(libraryData);
       setOrders(ordersData);
     } catch (err: any) {
       setError(err.message || "Failed to load your library");
@@ -90,49 +73,12 @@ export default function MyLibraryPage() {
     setTimeout(() => setCopiedTicket(null), 2000);
   };
 
-  const downloadEbook = async (item: LibraryItem) => {
-    try {
-      setDownloadingEbook(item.id);
-
-      const apiUrl = import.meta.env.VITE_API_URL || "";
-      const response = await fetch(
-        `${apiUrl}/.netlify/functions/generate-download-link`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: item.order_id,
-            filePath: item.file_path,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to generate download link");
-      }
-
-      const data = await response.json();
-
-      if (data.downloadUrl) {
-        window.open(data.downloadUrl, "_blank");
-      }
-    } catch (err: any) {
-      alert("Download failed: " + err.message);
-    } finally {
-      setDownloadingEbook(null);
-    }
-  };
-
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-  };
-
-  const isExpired = (expiresAt: string) => {
-    return new Date(expiresAt) < new Date();
   };
 
   if (loading) {
@@ -173,18 +119,14 @@ export default function MyLibraryPage() {
             </h1>
           </div>
           <p className="text-slate-400 text-sm">
-            Manage your tickets, eBooks, and orders in one place.
+            Manage your tickets and orders in one place.
           </p>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-6 max-w-md">
+          <div className="grid grid-cols-2 gap-4 mt-6 max-w-sm">
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
               <div className="text-2xl font-black text-[#FFD700]">{tickets.length}</div>
               <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">Active Tickets</div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-              <div className="text-2xl font-black text-[#FFD700]">{library.length}</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider mt-1">eBooks</div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
               <div className="text-2xl font-black text-[#FFD700]">{orders.length}</div>
@@ -195,8 +137,8 @@ export default function MyLibraryPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 mt-8">
-        {/* Tabs - Fixed with proper grid */}
-        <div className="grid grid-cols-3 gap-2 bg-[#12121a] border border-white/10 rounded-xl p-1.5 mb-8">
+        {/* Tabs */}
+        <div className="grid grid-cols-2 gap-2 bg-[#12121a] border border-white/10 rounded-xl p-1.5 mb-8">
           <button
             onClick={() => setActiveTab("tickets")}
             className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
@@ -207,17 +149,6 @@ export default function MyLibraryPage() {
           >
             <Ticket className="w-4 h-4" />
             <span className="hidden sm:inline">Tickets</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("ebooks")}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-              activeTab === "ebooks"
-                ? "bg-gradient-to-r from-[#FFD700] to-[#FFC107] text-black"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">eBooks</span>
           </button>
           <button
             onClick={() => setActiveTab("orders")}
@@ -317,72 +248,6 @@ export default function MyLibraryPage() {
                       <ExternalLink className="w-4 h-4" />
                       Verify Ticket
                     </a>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* eBooks Tab */}
-        {activeTab === "ebooks" && (
-          <div>
-            {library.length === 0 ? (
-              <div className="text-center py-20">
-                <BookOpen className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">No eBooks Yet</h3>
-                <p className="text-slate-400 text-sm mb-6">
-                  eBooks are included with select packages.
-                </p>
-                <a href="/store" className="inline-block bg-gradient-to-r from-[#FFD700] to-[#FFC107] text-black font-bold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
-                  Browse Packages
-                </a>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {library.map((item) => (
-                  <div key={item.id} className="bg-gradient-to-br from-[#12121a] to-[#1a1a2e] border border-white/10 rounded-2xl p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-[#FFD700]/20 to-[#FFC107]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <BookOpen className="w-7 h-7 text-[#FFD700]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-bold text-lg mb-1 truncate">
-                          {item.product_name}
-                        </h3>
-                        <p className="text-slate-400 text-sm mb-3">
-                          {item.file_path}
-                        </p>
-
-                        <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
-                          <Calendar className="w-3.5 h-3.5" />
-                          <span>Added {formatDate(item.created_at)}</span>
-                        </div>
-
-                        {isExpired(item.expires_at) ? (
-                          <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2.5 text-sm text-red-400">
-                            Download link expired on {formatDate(item.expires_at)}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => downloadEbook(item)}
-                            disabled={downloadingEbook === item.id}
-                            className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#FFD700] to-[#FFC107] text-black font-bold py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                          >
-                            {downloadingEbook === item.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Download className="w-4 h-4" />
-                            )}
-                            {downloadingEbook === item.id ? "Generating Link..." : "Download eBook"}
-                          </button>
-                        )}
-
-                        <p className="text-slate-500 text-xs mt-2 text-center">
-                          Link expires {formatDate(item.expires_at)}
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 ))}
               </div>

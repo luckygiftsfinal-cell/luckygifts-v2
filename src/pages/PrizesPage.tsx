@@ -9,7 +9,7 @@ const DEFAULT_PRIZES = [
     id: '1',
     title: "Cash Prizes", 
     img: "/images/prize_cash.png", 
-    items: ["$1,000,000 Grand Prize", "$100,000 Second Prize"],
+    items: ["$5,000,000 Grand Prize", "$1,000,000 Second Prize"],
     color: "#22c55e",
     tag: "CASH"
   },
@@ -17,7 +17,7 @@ const DEFAULT_PRIZES = [
     id: '2',
     title: "Luxury Prizes", 
     img: "/images/prize_luxury.png", 
-    items: ["Range Rover Defender", "Rolex Datejust 41"],
+    items: ["Range Rover Defender 2026", "Rolex Datejust 41"],
     color: "#FFD700",
     tag: "LUXURY"
   },
@@ -81,7 +81,7 @@ export default function PrizesPage() {
     }}>
       <SEO
         title="Current Prizes — Win Rolex, Cars, Cash and More"
-        description="View all current prizes at LuckyGifts. From $1M cash to luxury watches, cars, and tech gadgets. Enter now."
+        description="View all current prizes at LuckyGifts. From $5M cash to luxury watches, cars, and tech gadgets. Enter now."
         url="/prizes"
         keywords="win Rolex UAE, win Range Rover Dubai, cash prizes online, luxury prize draw"
       />
@@ -117,7 +117,7 @@ export default function PrizesPage() {
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ position: "absolute", top: -80, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #FFD700, transparent)" }} />
             <span style={{ color: "#FFD700", fontWeight: 800, letterSpacing: "0.2em", fontSize: 13, textTransform: "uppercase", marginBottom: 16, display: "block" }}>GRAND PRIZE</span>
-            <h2 style={{ fontSize: "clamp(48px, 10vw, 96px)", fontWeight: 950, background: "linear-gradient(135deg, #fff 0%, #FFD700 50%, #8B6914 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 16px 0" }}>$1,000,000</h2>
+            <h2 style={{ fontSize: "clamp(48px, 10vw, 96px)", fontWeight: 950, background: "linear-gradient(135deg, #fff 0%, #FFD700 50%, #8B6914 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 16px 0" }}>$5,000,000</h2>
             <p style={{ fontSize: 20, color: "#f0ece4", fontWeight: 600, marginBottom: 40 }}>Win life-changing cash instantly.</p>
 
             {/* Promotional Stats Bar */}

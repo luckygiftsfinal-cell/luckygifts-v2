@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 const SPONSORS = [
   { name: "Red Bull", logo: "/uploads/Red-Bull-Logo.jpg", invert: false },
-  { name: "MasterCard", logo: "/uploads/MasterCard_Logo.png", invert: false },
+
   { name: "RBC", logo: "/uploads/rbc-logo.jpg", invert: false },
   { name: "Nestlé", logo: "/uploads/neslte_logo.png", invert: false },
 ];

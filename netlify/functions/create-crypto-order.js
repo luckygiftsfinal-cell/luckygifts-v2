@@ -17,7 +17,7 @@ const VIP_PREFIX = "vip_";
 const VIP_TABLE = "vip_packages"; // ⚠️ change if your table has a different name
 const VIP_IMAGE = "/images/prize_luxury.png";
 
-exports.handler = async (event) => {
+const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Method Not Allowed" });
 
   const supabase = getSupabase();
@@ -225,4 +225,15 @@ exports.handler = async (event) => {
     wallets,
     expiresAt: new Date(new Date(order.created_at).getTime() + EXPIRY_HOURS * 3600 * 1000).toISOString(),
   });
+};
+
+// Safety wrapper: any uncaught crash is returned as JSON (instead of a 502 HTML page)
+// so the real error is visible in the browser's Network tab and in Netlify function logs.
+exports.handler = async (event) => {
+  try {
+    return await handler(event);
+  } catch (err) {
+    console.error("create-crypto-order crash:", err);
+    return json(500, { error: "Server error", detail: String((err && err.message) || err) });
+  }
 };
